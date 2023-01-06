@@ -1,2 +1,3 @@
 this is file B.
 make some changes.
+XXXX
