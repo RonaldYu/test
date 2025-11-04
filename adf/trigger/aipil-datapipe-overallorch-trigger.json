@@ -1,0 +1,148 @@
+{
+    "name": "aipil-datapipe-overallorch-trigger",
+    "properties": {
+        "annotations": [
+            "ai-pil",
+            "data-pipe"
+        ],
+        "runtimeState": "Stopped",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "aipil-datapipe-000-003-000_overallorch",
+                    "type": "PipelineReference"
+                },
+                "parameters": {
+                    "datapipe_apim_baseurl": "https://phkl-apim-nprd.prudential.com.hk/ai-pil-data-pipe-api/dev",
+                    "datapipe_apim_subkey": "$APIM_SUBSCRIPTION_KEY",
+                    "taskqueue_trigger_jobrun_wait_sec": 5,
+                    "taskqueue_check_processlog_wait_sec": 360,
+                    "mainjob_trigger_jobrun_wait_sec": 5,
+                    "mainjob_check_processlog_wait_sec": 360,
+                    "pipeline_rpt_routepth": "/tskproc/pipeline/rpt",
+                    "syncpil_doc_triggerind_routepth": "/pilsync/doc-metadata/trigger-indicator",
+                    "syncpil_doc_jobrun_routepth": "/pilsync/doc-metadata/bkg-tsk/job-run",
+                    "syncpil_doc_processlog_routepth": "/pilsync/doc-metadata/bkg-tsk/process-log",
+                    "syncpil_doc_job_names": [
+                        "PILSYNC_DOC_METADATA"
+                    ],
+                    "syncpil_doc_rpt_routepth": "/pilsync/doc-metadata/bkg-tsk/rpt",
+                    "syncpil_agent_triggerind_routepth": "/pilsync/agent-access/trigger-indicator",
+                    "syncpil_agent_jobrun_routepth": "/pilsync/agent-access/bkg-tsk/job-run",
+                    "syncpil_agent_processlog_routepth": "/pilsync/agent-access/bkg-tsk/process-log",
+                    "syncpil_agent_job_names": [
+                        "PILSYNC_AGENT_ACCESS"
+                    ],
+                    "syncpil_agent_rpt_routepth": "/pilsync/agent-access/bkg-tsk/rpt",
+                    "syncpil_admin_triggerind_routepth": "/pilsync/admin-access/trigger-indicator",
+                    "syncpil_admin_jobrun_routepth": "/pilsync/admin-access/bkg-tsk/job-run",
+                    "syncpil_admin_processlog_routepth": "/pilsync/admin-access/bkg-tsk/process-log",
+                    "syncpil_admin_job_names": [
+                        "PILSYNC_ADMIN_ACCESS"
+                    ],
+                    "syncpil_admin_rpt_routepth": "/pilsync/admin-access/bkg-tsk/rpt",
+                    "datacleansing_knwcleansing_job_names": [
+                        "KNW_CLEANSING_TASK_QUEUE",
+                        "KNW_CLEANSING"
+                    ],
+                    "datacleansing_knwcleansing_mainjob_run_n_workers": 5,
+                    "datacleansing_knwcleansing_taskqueue_triggerind_routepth": "/knwcleansing/task-queue/trigger-indicator",
+                    "datacleansing_knwcleansing_taskqueue_jobrun_routepth": "/knwcleansing/task-queue/bkg-tsk/job-run",
+                    "datacleansing_knwcleansing_taskqueue_processlog_routepth": "/knwcleansing/task-queue/bkg-tsk/process-log",
+                    "datacleansing_knwcleansing_taskqueue_rpt_routepth": "/knwcleansing/task-queue/bkg-tsk/rpt",
+                    "datacleansing_knwcleansing_mainjob_triggerind_routepth": "/knwcleansing/knowledge-cleansing/trigger-indicator",
+                    "datacleansing_knwcleansing_mainjob_jobrun_routepth": "/knwcleansing/knowledge-cleansing/bkg-tsk/job-run",
+                    "datacleansing_knwcleansing_mainjob_processlog_routepth": "/knwcleansing/knowledge-cleansing/bkg-tsk/process-log",
+                    "datacleansing_knwcleansing_mainjob_rpt_routepth": "/knwcleansing/knowledge-cleansing/bkg-tsk/rpt",
+                    "metadataext_metaext_job_names": [
+                        "METADATA_EXTRACT_TASK_QUEUE",
+                        "METADATA_EXTRACT"
+                    ],
+                    "metadataext_metaext_mainjob_run_n_workers": 3,
+                    "metadataext_metaext_taskqueue_triggerind_routepth": "/pilmetainfoext/task-queue/trigger-indicator",
+                    "metadataext_metaext_taskqueue_jobrun_routepth": "/pilmetainfoext/task-queue/bkg-tsk/job-run",
+                    "metadataext_metaext_taskqueue_processlog_routepth": "/pilmetainfoext/task-queue/bkg-tsk/process-log",
+                    "metadataext_metaext_taskqueue_rpt_routepth": "/pilmetainfoext/task-queue/bkg-tsk/rpt",
+                    "metadataext_metaext_mainjob_triggerind_routepth": "/pilmetainfoext/metadata-extraction/trigger-indicator",
+                    "metadataext_metaext_mainjob_jobrun_routepth": "/pilmetainfoext/metadata-extraction/bkg-tsk/job-run",
+                    "metadataext_metaext_mainjob_processlog_routepth": "/pilmetainfoext/metadata-extraction/bkg-tsk/process-log",
+                    "metadataext_metaext_mainjob_rpt_routepth": "/pilmetainfoext/metadata-extraction/bkg-tsk/rpt",
+                    "docingest_pdfconversion_job_names": [
+                        "PDF_CONVERSION_TASK_QUEUE",
+                        "PDF_CONVERSION"
+                    ],
+                    "docingest_pdfconversion_mainjob_run_n_workers": 5,
+                    "docingest_markdowngen_job_names": [
+                        "MARKDOWN_GENERATION_TASK_QUEUE",
+                        "MARKDOWN_GENERATION"
+                    ],
+                    "docingest_markdowngen_mainjob_run_n_workers": 10,
+                    "docingest_chunking_job_names": [
+                        "CHUNKING_TASK_QUEUE",
+                        "CHUNKING"
+                    ],
+                    "docingest_chunking_mainjob_run_n_workers": 5,
+                    "docingest_embedding_job_names": [
+                        "EMBEDDING_TASK_QUEUE",
+                        "EMBEDDING"
+                    ],
+                    "docingest_embedding_mainjob_run_n_workers": 5,
+                    "docingest_syncaisearch_job_names": [
+                        "SYNCAISEARCH_TASK_QUEUE",
+                        "SYNCAISEARCH"
+                    ],
+                    "docingest_syncaisearch_mainjob_run_n_workers": 5,
+                    "docingest_pdfconversion_taskqueue_triggerind_routepth": "/ingestion/pdfconversion/task-queue/trigger-indicator",
+                    "docingest_pdfconversion_taskqueue_jobrun_routepth": "/ingestion/pdfconversion/task-queue/bkg-tsk/job-run",
+                    "docingest_pdfconversion_taskqueue_processlog_routepth": "/ingestion/pdfconversion/task-queue/bkg-tsk/process-log",
+                    "docingest_pdfconversion_taskqueue_rpt_routepth": "/ingestion/pdfconversion/task-queue/bkg-tsk/rpt",
+                    "docingest_pdfconversion_mainjob_triggerind_routepth": "/ingestion/pdfconversion/pdfconversion/trigger-indicator",
+                    "docingest_pdfconversion_mainjob_jobrun_routepth": "/ingestion/pdfconversion/pdfconversion/bkg-tsk/job-run",
+                    "docingest_pdfconversion_mainjob_processlog_routepth": "/ingestion/pdfconversion/pdfconversion/bkg-tsk/process-log",
+                    "docingest_pdfconversion_mainjob_rpt_routepth": "/ingestion/pdfconversion/pdfconversion/bkg-tsk/rpt",
+                    "docingest_markdowngen_taskqueue_triggerind_routepth": "/ingestion/markdowngen/task-queue/trigger-indicator",
+                    "docingest_markdowngen_taskqueue_jobrun_routepth": "/ingestion/markdowngen/task-queue/bkg-tsk/job-run",
+                    "docingest_markdowngen_taskqueue_processlog_routepth": "/ingestion/markdowngen/task-queue/bkg-tsk/process-log",
+                    "docingest_markdowngen_taskqueue_rpt_routepth": "/ingestion/markdowngen/task-queue/bkg-tsk/rpt",
+                    "docingest_markdowngen_mainjob_triggerind_routepth": "/ingestion/markdowngen/markdowngen/trigger-indicator",
+                    "docingest_markdowngen_mainjob_jobrun_routepth": "/ingestion/markdowngen/markdowngen/bkg-tsk/job-run",
+                    "docingest_markdowngen_mainjob_processlog_routepth": "/ingestion/markdowngen/markdowngen/bkg-tsk/process-log",
+                    "docingest_markdowngen_mainjob_rpt_routepth": "/ingestion/markdowngen/markdowngen/bkg-tsk/rpt",
+                    "docingest_chunking_taskqueue_triggerind_routepth": "/ingestion/chunking/task-queue/trigger-indicator",
+                    "docingest_chunking_taskqueue_jobrun_routepth": "/ingestion/chunking/task-queue/bkg-tsk/job-run",
+                    "docingest_chunking_taskqueue_processlog_routepth": "/ingestion/chunking/task-queue/bkg-tsk/process-log",
+                    "docingest_chunking_taskqueue_rpt_routepth": "/ingestion/chunking/task-queue/bkg-tsk/rpt",
+                    "docingest_chunking_mainjob_triggerind_routepth": "/ingestion/chunking/chunking/trigger-indicator",
+                    "docingest_chunking_mainjob_jobrun_routepth": "/ingestion/chunking/chunking/bkg-tsk/job-run",
+                    "docingest_chunking_mainjob_processlog_routepth": "/ingestion/chunking/chunking/bkg-tsk/process-log",
+                    "docingest_chunking_mainjob_rpt_routepth": "/ingestion/chunking/chunking/bkg-tsk/rpt",
+                    "docingest_embedding_taskqueue_triggerind_routepth": "/ingestion/embedding/task-queue/trigger-indicator",
+                    "docingest_embedding_taskqueue_jobrun_routepth": "/ingestion/embedding/task-queue/bkg-tsk/job-run",
+                    "docingest_embedding_taskqueue_processlog_routepth": "/ingestion/embedding/task-queue/bkg-tsk/process-log",
+                    "docingest_embedding_taskqueue_rpt_routepth": "/ingestion/embedding/task-queue/bkg-tsk/rpt",
+                    "docingest_embedding_mainjob_triggerind_routepth": "/ingestion/embedding/embedding/trigger-indicator",
+                    "docingest_embedding_mainjob_jobrun_routepth": "/ingestion/embedding/embedding/bkg-tsk/job-run",
+                    "docingest_embedding_mainjob_processlog_routepth": "/ingestion/embedding/embedding/bkg-tsk/process-log",
+                    "docingest_embedding_mainjob_rpt_routepth": "/ingestion/embedding/embedding/bkg-tsk/rpt",
+                    "docingest_syncaisearch_taskqueue_triggerind_routepth": "/ingestion/syncaisearch/task-queue/trigger-indicator",
+                    "docingest_syncaisearch_taskqueue_jobrun_routepth": "/ingestion/syncaisearch/task-queue/bkg-tsk/job-run",
+                    "docingest_syncaisearch_taskqueue_processlog_routepth": "/ingestion/syncaisearch/task-queue/bkg-tsk/process-log",
+                    "docingest_syncaisearch_taskqueue_rpt_routepth": "/ingestion/syncaisearch/task-queue/bkg-tsk/rpt",
+                    "docingest_syncaisearch_mainjob_triggerind_routepth": "/ingestion/syncaisearch/syncaisearch/trigger-indicator",
+                    "docingest_syncaisearch_mainjob_jobrun_routepth": "/ingestion/syncaisearch/syncaisearch/bkg-tsk/job-run",
+                    "docingest_syncaisearch_mainjob_processlog_routepth": "/ingestion/syncaisearch/syncaisearch/bkg-tsk/process-log",
+                    "docingest_syncaisearch_mainjob_rpt_routepth": "/ingestion/syncaisearch/syncaisearch/bkg-tsk/rpt"
+                }
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Hour",
+                "interval": 4,
+                "startTime": "2025-12-01T19:57:00",
+                "timeZone": "China Standard Time"
+            }
+        }
+    }
+}

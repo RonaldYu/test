@@ -1,0 +1,30 @@
+{
+    "name": "trigger1",
+    "properties": {
+        "annotations": [
+            "ai-pil",
+            "test"
+        ],
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "pipeline1",
+                    "type": "PipelineReference"
+                },
+                "parameters": {
+                    "x": "ddddggggxxxx"
+                }
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Hour",
+                "interval": 15,
+                "startTime": "2025-10-30T07:35:00",
+                "timeZone": "China Standard Time"
+            }
+        }
+    }
+}

@@ -1,0 +1,178 @@
+name: "Deploy Trigger in Azure Data Factory"
+description: "Deploy Trigger in Azure Data Factory, including create/update, start/stop, or delete the trigger"
+ 
+inputs:
+ 
+  adf_name:
+    description: "Name of Azure Data Factory"
+    required: true
+  adf_resource_group:
+    description: "Resource Group Name where Azure Data Factory is located"
+    required: true
+  sp_app_id:
+    description: "The application id of service principle used to login azure and deploy ADF"
+    required: true
+  sp_tenant_id:
+    description: "The tenant id of service principle used to login azure and deploy ADP"
+    required: true
+  sp_secret:
+    description: "The secrets of service principle used to login azure and deploy ADP"
+    required: true
+  adf_trigger_pth:
+    description: "The json file contains a trigger definition which will be published to ADF"
+    required: true
+  adf_trigger_deploy_action:
+    description: "The action to create/update, start/stop, or delete the trigger"
+    required: true
+  enable_auto_start:
+    description: "Whether to enable auto start of the trigger after creation or update"
+    required: false
+  secret_placeholder_1:
+    description: "The placeholder of the first secret"
+    required: false
+  secret_value_1:
+    description: "The value of the first secret"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Record basic information of the action
+      id: record_basic_information
+      shell: bash
+      run: |
+        echo "Azure Resource Group: ${{ inputs.adf_resource_group }}" >> $GITHUB_STEP_SUMMARY
+        echo "Azure Data Factory Name: ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "Trigger File Path: ${{ inputs.adf_trigger_pth }}" >> $GITHUB_STEP_SUMMARY
+        echo "Action: ${{ inputs.adf_trigger_deploy_action }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Log in Azure with Service principal
+      id: az_login
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          ls .
+          az config set extension.use_dynamic_install=yes_without_prompt;
+          login_output=$(az login --service-principal --username ${{ inputs.sp_app_id }} --password ${{ inputs.sp_secret }} --tenant ${{ inputs.sp_tenant_id }} --allow-no-subscriptions 2>&1);
+         
+          if echo "$login_output" | grep -q 'tenantId'; then
+              echo "is_login=ok" >> $GITHUB_OUTPUT
+          else
+              echo "is_login=fail" >> $GITHUB_OUTPUT
+          fi
+    
+    - name: Create or update a trigger to Azure data factory
+      id: create_or_update_trigger
+      if: steps.az_login.outputs.is_login == 'ok' && (inputs.adf_trigger_deploy_action == 'create' || inputs.adf_trigger_deploy_action == 'update')
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          trigger_nm=$(cat ${{ inputs.adf_trigger_pth }} | jq -r '.name')
+          trigger_pr=$(cat ${{ inputs.adf_trigger_pth }} | jq -c '.properties')
+
+          if [ -n "${{ inputs.secret_value_1 }}" ] && [ -n "${{ inputs.secret_placeholder_1 }}" ]; then
+            trigger_pr=$(printf '%s' "$trigger_pr" | jq --arg pwd "${{ inputs.secret_value_1 }}" --arg pwd_hlr "${{ inputs.secret_placeholder_1 }}" -c \
+              '(.. | select(type=="string")) |= gsub("\\$" + $pwd_hlr; $pwd)')
+          fi
+
+          # Stop the trigger if it is running before creation or update
+          existing_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$existing_state" = "Started" ]; then
+            az datafactory trigger stop \
+              --factory-name ${{ inputs.adf_name }} \
+              --name $trigger_nm \
+              --resource-group ${{ inputs.adf_resource_group }}
+          fi
+
+          az datafactory trigger create \
+            --factory-name ${{ inputs.adf_name }} \
+            --properties "$trigger_pr" \
+            --name $trigger_nm \
+            --resource-group ${{ inputs.adf_resource_group }}
+          
+          if [ "$enable_auto_start" = "true"]; then
+            az datafactory trigger start \
+              --factory-name ${{ inputs.adf_name }} \
+              --name $trigger_nm \
+              --resource-group ${{ inputs.adf_resource_group }}
+          fi
+          
+          echo "Execute the action of ${{ inputs.adf_trigger_deploy_action }} on the trigger, $trigger_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+
+
+    - name: Start or stop a trigger from Azure data factory
+      id: start_or_stop_trigger
+      if: steps.az_login.outputs.is_login == 'ok' && (inputs.adf_trigger_deploy_action == 'start' || inputs.adf_trigger_deploy_action == 'stop')
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+
+          trigger_nm=$(cat ${{ inputs.adf_trigger_pth }} | jq -r '.name')
+
+          # Check if the trigger exists
+          existing_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$existing_state" = "NotFound" ]; then
+            echo "Trigger $trigger_nm not found in Azure Data Factory ${{ inputs.adf_name }}"
+            exit 1
+          fi
+
+          # Start or stop the trigger
+          if [ "$inputs.adf_trigger_deploy_action" = "start" ]; then
+            echo "Calling start trigger API..."
+            triggered_start_res=$(az datafactory trigger start --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} 2>&1)
+            echo $triggered_start_res
+          elif [ "$inputs.adf_trigger_deploy_action" = "stop" ]; then
+            echo "Calling stop trigger API..."
+            triggered_stop_res=$(az datafactory trigger stop --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} 2>&1)
+            echo $triggered_stop_res
+          fi
+
+          # Check if the trigger is started or stopped after the action
+          updated_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$updated_state" = "Started" ] && [ "$inputs.adf_trigger_deploy_action" = "start" ]; then
+            echo "Trigger $trigger_nm is started after the action"
+          elif [ "$updated_state" = "Stopped" ] && [ "$inputs.adf_trigger_deploy_action" = "stop" ]; then
+            echo "Trigger $trigger_nm is stopped after the action"
+          else
+            echo "Trigger $trigger_nm is still $updated_state after the action"
+            exit 1
+          fi
+
+          echo "Execute the action of ${{ inputs.adf_trigger_deploy_action }} on the trigger, $trigger_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+
+          
+    - name: Delete a trigger from Azure data factory
+      id: delete_trigger
+      if: steps.az_login.outputs.is_login == 'ok' && inputs.adf_trigger_deploy_action == 'delete'
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+
+          trigger_nm=$(cat ${{ inputs.adf_trigger_pth }} | jq -r '.name')
+
+          # Check if the trigger exists
+          existing_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$existing_state" = "NotFound" ]; then
+            echo "Trigger $trigger_nm not found in Azure Data Factory ${{ inputs.adf_name }}"
+            exit 1
+          elif [ "$existing_state" = "Started" ]; then
+            echo "Trigger $trigger_nm is running, stopping it first"
+            exit 1
+          fi
+
+          az datafactory trigger delete \
+            --factory-name ${{ inputs.adf_name }} \
+            --name $trigger_nm \
+            --resource-group ${{ inputs.adf_resource_group }} \
+            --yes
+
+          # Check if the trigger is deleted after the action
+          deleted_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$deleted_state" = "NotFound" ]; then
+            echo "Trigger $trigger_nm is deleted after the action"
+          else
+            echo "Trigger $trigger_nm is not deleted after the action"
+            exit 1
+          fi
+
+          echo "Execute the action of ${{ inputs.adf_trigger_deploy_action }} on the trigger, $trigger_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY

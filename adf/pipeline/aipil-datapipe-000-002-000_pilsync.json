@@ -1,0 +1,603 @@
+{
+    "name": "aipil-datapipe-000-002-000_pilsync",
+    "properties": {
+        "description": "this pipeline is used to sync data sent from PIL, including\n1. document metadata\n2. agent access mapping\n3. admin access mapping",
+        "activities": [
+            {
+                "name": "set-pipeline-id",
+                "description": "set pipeline id for further tracking",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipeline_id",
+                    "value": {
+                        "value": "@if(\n    empty(pipeline().parameters.root_pipeline_id),\n    pipeline().RunId,\n    pipeline().parameters.root_pipeline_id\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "sync-agent-access",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pil-sync"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "sync-agent-access"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.agent_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": false,
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.agent_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.agent_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.agent_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.agent_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": 1
+                    }
+                }
+            },
+            {
+                "name": "sync-admin-access",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pil-sync"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "sync-admin-access"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.admin_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": false,
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.admin_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.admin_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.admin_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.admin_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": 1
+                    }
+                }
+            },
+            {
+                "name": "sync-doc-metadata",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pil-sync"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "sync-doc-metadata"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.doc_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": false,
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.doc_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.doc_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.doc_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.doc_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": 1
+                    }
+                }
+            },
+            {
+                "name": "set-agent-pipeline-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "sync-agent-access",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "agent_access",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('sync-agent-access').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-admin-pipeline-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "sync-admin-access",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "admin_access",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('sync-admin-access').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-doc-pipeline-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "sync-doc-metadata",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "doc_metadata",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('sync-doc-metadata').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-fail-sync-agent-access",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "sync-agent-access",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_sync_agent_access_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-sync-admin-access",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "sync-admin-access",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_sync_admin_access_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-sync-doc-metadata",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "sync-doc-metadata",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_sync_doc_metadata_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if-pipeline-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set-fail-sync-agent-access",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-sync-admin-access",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-sync-doc-metadata",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(\n    or(\n        variables('fail_sync_admin_access_ind'),\n        variables('fail_sync_agent_access_ind')\n    ),\n    variables('fail_sync_doc_metadata_ind')\n)",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "raise-pipeline-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": {
+                                    "value": "@concat(\n    'The pipeline run failed due to an activity failure. Please check the activity grid below for more detailed information, including the following activities: ',\n    if(\n        variables('fail_sync_admin_access_ind'),\n        '#SyncAdminAccess ' , '' \n    ),\n    if(\n        variables('fail_sync_agent_access_ind'),\n        '#SyncAgentAccess ' , '' \n    ),\n    if(\n        variables('fail_sync_doc_metadata_ind'),\n        '#SyncDocumentMetadata ' , '' \n    )\n)",
+                                    "type": "Expression"
+                                },
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "concurrency": 1,
+        "parameters": {
+            "datapipe_apim_baseurl": {
+                "type": "string"
+            },
+            "datapipe_apim_subkey": {
+                "type": "string"
+            },
+            "root_pipeline_id": {
+                "type": "string"
+            },
+            "mainjob_trigger_jobrun_wait_sec": {
+                "type": "string"
+            },
+            "mainjob_check_processlog_wait_sec": {
+                "type": "string"
+            },
+            "pipeline_rpt_routepth": {
+                "type": "string"
+            },
+            "doc_triggerind_routepth": {
+                "type": "string"
+            },
+            "doc_jobrun_routepth": {
+                "type": "string"
+            },
+            "doc_processlog_routepth": {
+                "type": "string"
+            },
+            "doc_job_names": {
+                "type": "string"
+            },
+            "doc_rpt_routepth": {
+                "type": "string"
+            },
+            "agent_triggerind_routepth": {
+                "type": "string"
+            },
+            "agent_jobrun_routepth": {
+                "type": "string"
+            },
+            "agent_processlog_routepth": {
+                "type": "string",
+                "defaultValue": "/pilsync/agent-access/bkg-tsk/process-log"
+            },
+            "agent_job_names": {
+                "type": "string",
+                "defaultValue": [
+                    "PILSYNC_AGENT_ACCESS"
+                ]
+            },
+            "agent_rpt_routepth": {
+                "type": "string",
+                "defaultValue": "/pilsync/agent-access/bkg-tsk/rpt"
+            },
+            "admin_triggerind_routepth": {
+                "type": "string",
+                "defaultValue": "/pilsync/admin-access/trigger-indicator"
+            },
+            "admin_jobrun_routepth": {
+                "type": "string",
+                "defaultValue": "/pilsync/admin-access/bkg-tsk/job-run"
+            },
+            "admin_processlog_routepth": {
+                "type": "string",
+                "defaultValue": "/pilsync/admin-access/bkg-tsk/process-log"
+            },
+            "admin_job_names": {
+                "type": "string",
+                "defaultValue": [
+                    "PILSYNC_ADMIN_ACCESS"
+                ]
+            },
+            "admin_rpt_routepth": {
+                "type": "string",
+                "defaultValue": "/pilsync/admin-access/bkg-tsk/rpt"
+            }
+        },
+        "variables": {
+            "pipeline_id": {
+                "type": "String"
+            },
+            "fail_sync_agent_access_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_sync_admin_access_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_sync_doc_metadata_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [
+            "aipil",
+            "data-pipe",
+            "pil-sync"
+        ],
+        "lastPublishTime": "2025-10-30T06:13:59Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

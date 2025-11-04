@@ -1,0 +1,1233 @@
+{
+    "name": "aipil-datapipe-000-003-000_overallorch",
+    "properties": {
+        "description": "This pipeline is used to orchestrate the below pipelines:\n1. sync pil\n2. data cleansing\n3. metadata extraction\n4. document ingestion",
+        "activities": [
+            {
+                "name": "exec-pilsync",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pipeline-orchestration"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "pil-sync"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-002-000_pilsync",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "doc_triggerind_routepth": {
+                            "value": "@pipeline().parameters.syncpil_doc_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "doc_jobrun_routepth": {
+                            "value": "@pipeline().parameters.syncpil_doc_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "doc_processlog_routepth": {
+                            "value": "@pipeline().parameters.syncpil_doc_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "doc_job_names": {
+                            "value": "@pipeline().parameters.syncpil_doc_job_names",
+                            "type": "Expression"
+                        },
+                        "doc_rpt_routepth": {
+                            "value": "@pipeline().parameters.syncpil_doc_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "agent_triggerind_routepth": {
+                            "value": "@pipeline().parameters.syncpil_agent_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "agent_jobrun_routepth": {
+                            "value": "@pipeline().parameters.syncpil_agent_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "agent_processlog_routepth": {
+                            "value": "@pipeline().parameters.syncpil_agent_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "agent_job_names": {
+                            "value": "@pipeline().parameters.syncpil_agent_job_names",
+                            "type": "Expression"
+                        },
+                        "agent_rpt_routepth": {
+                            "value": "@pipeline().parameters.syncpil_agent_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "admin_triggerind_routepth": {
+                            "value": "@pipeline().parameters.syncpil_admin_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "admin_jobrun_routepth": {
+                            "value": "@pipeline().parameters.syncpil_admin_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "admin_processlog_routepth": {
+                            "value": "@pipeline().parameters.syncpil_admin_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "admin_job_names": {
+                            "value": "@pipeline().parameters.syncpil_admin_job_names",
+                            "type": "Expression"
+                        },
+                        "admin_rpt_routepth": {
+                            "value": "@pipeline().parameters.syncpil_admin_rpt_routepth",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "exec-datacleansing",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-pilsync",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pipeline-orchestration"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "data-cleansing"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-002-001_datacleansing",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_job_names": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_job_names",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "knwcleansing_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.datacleansing_knwcleansing_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "exec-metadataext",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-datacleansing",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pipeline-orchestration"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "metadata-extraction"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-002-002_metaext",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "metaext_job_names": {
+                            "value": "@pipeline().parameters.metadataext_metaext_job_names",
+                            "type": "Expression"
+                        },
+                        "metaext_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.metadataext_metaext_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "metaext_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "metaext_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.metadataext_metaext_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "exec-docingestion",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-metadataext",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "pipeline-orchestration"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "document-ingestion"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-002-003_docingestion",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_job_names": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_job_names",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "markdowngen_job_names": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_job_names",
+                            "type": "Expression"
+                        },
+                        "markdowngen_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "chunking_job_names": {
+                            "value": "@pipeline().parameters.docingest_chunking_job_names",
+                            "type": "Expression"
+                        },
+                        "chunking_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.docingest_chunking_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "embedding_job_names": {
+                            "value": "@pipeline().parameters.docingest_embedding_job_names",
+                            "type": "Expression"
+                        },
+                        "embedding_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.docingest_embedding_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_job_names": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_job_names",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_mainjob_run_n_workers",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "pdfconversion_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_pdfconversion_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "markdowngen_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_markdowngen_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "chunking_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_chunking_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "embedding_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_embedding_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "syncaisearch_mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.docingest_syncaisearch_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-fail-pilsync",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-pilsync",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_pilsync_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-datacleansing",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-datacleansing",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_datacleansing_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-metadataext",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-metadataext",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_metadataext_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-docingestion",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-docingestion",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_docingestion_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if-pipeline-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set-fail-docingestion",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-metadataext",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-datacleansing",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-pilsync",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(\n    variables('fail_pilsync_ind'),\n    or(\n        variables('fail_datacleansing_ind'),\n        or(\n            variables('fail_metadataext_ind'),\n            variables('fail_docingestion_ind')\n        )\n    )\n)",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "raise-pipeline-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": {
+                                    "value": "@concat(\n    'The pipeline run failed due to an activity failure. Please check the activity grid below for more detailed information, including the following activities: ',\n    if(\n        variables('fail_pilsync_ind'),\n        '#PILsync ' , '' \n    ),\n    if(\n        variables('fail_datacleansing_ind'),\n        '#DataCleansing ' , '' \n    ),\n    if(\n        variables('fail_metadataext_ind'),\n        '#MetadataExtraction ' , '' \n    ),\n    if(\n        variables('fail_docingestion_ind'),\n        '#DocumentIngestion ' , '' \n    )\n)",
+                                    "type": "Expression"
+                                },
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "set-pilsync-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-pilsync",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "pil-sync",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-pilsync').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-datacleansing-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-datacleansing",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "data-cleansing",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-datacleansing').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-metadataext-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-metadataext",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "metadata-extraction",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-metadataext').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-docingestion-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-docingestion",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "document-ingestion",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-docingestion').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-pipeline-id",
+                "description": "set pipeline id for further tracking",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipeline_id",
+                    "value": {
+                        "value": "@pipeline().RunId",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "concurrency": 1,
+        "parameters": {
+            "datapipe_apim_baseurl": {
+                "type": "string"
+            },
+            "datapipe_apim_subkey": {
+                "type": "string"
+            },
+            "taskqueue_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "taskqueue_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "pipeline_rpt_routepth": {
+                "type": "string"
+            },
+            "syncpil_doc_triggerind_routepth": {
+                "type": "string"
+            },
+            "syncpil_doc_jobrun_routepth": {
+                "type": "string"
+            },
+            "syncpil_doc_processlog_routepth": {
+                "type": "string"
+            },
+            "syncpil_doc_job_names": {
+                "type": "array"
+            },
+            "syncpil_doc_rpt_routepth": {
+                "type": "string"
+            },
+            "syncpil_agent_triggerind_routepth": {
+                "type": "string"
+            },
+            "syncpil_agent_jobrun_routepth": {
+                "type": "string"
+            },
+            "syncpil_agent_processlog_routepth": {
+                "type": "string"
+            },
+            "syncpil_agent_job_names": {
+                "type": "array"
+            },
+            "syncpil_agent_rpt_routepth": {
+                "type": "string"
+            },
+            "syncpil_admin_triggerind_routepth": {
+                "type": "string"
+            },
+            "syncpil_admin_jobrun_routepth": {
+                "type": "string"
+            },
+            "syncpil_admin_processlog_routepth": {
+                "type": "string"
+            },
+            "syncpil_admin_job_names": {
+                "type": "array"
+            },
+            "syncpil_admin_rpt_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_job_names": {
+                "type": "array"
+            },
+            "datacleansing_knwcleansing_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "datacleansing_knwcleansing_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "datacleansing_knwcleansing_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_job_names": {
+                "type": "array"
+            },
+            "metadataext_metaext_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "metadataext_metaext_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "metadataext_metaext_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_job_names": {
+                "type": "array"
+            },
+            "docingest_pdfconversion_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "docingest_markdowngen_job_names": {
+                "type": "array"
+            },
+            "docingest_markdowngen_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "docingest_chunking_job_names": {
+                "type": "array"
+            },
+            "docingest_chunking_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "docingest_embedding_job_names": {
+                "type": "array"
+            },
+            "docingest_embedding_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "docingest_syncaisearch_job_names": {
+                "type": "array"
+            },
+            "docingest_syncaisearch_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "docingest_pdfconversion_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_pdfconversion_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_markdowngen_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_chunking_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_embedding_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "docingest_syncaisearch_mainjob_rpt_routepth": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "pipeline_id": {
+                "type": "String"
+            },
+            "fail_pilsync_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_datacleansing_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_metadataext_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_docingestion_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [
+            "aipil",
+            "data-pipe",
+            "pipeline-orchestration"
+        ],
+        "lastPublishTime": "2025-10-30T06:13:59Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

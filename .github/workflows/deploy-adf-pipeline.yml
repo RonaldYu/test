@@ -1,0 +1,127 @@
+name: Deploy Pipeline in Azure Data Factory (Create/Update or Delete)
+run-name: "Deploy Pipeline in Azure Data Factory | ${{ github.event.inputs.adf_name }} | ${{ github.event.inputs.adf_pipeline_type}} | ${{ github.event.inputs.adf_pipeline_deploy_action }}"
+on:
+  workflow_dispatch:
+    inputs:
+      
+      resource_group_name:
+        required: true
+        type: string
+        description: "The name of the resource group"
+      
+      adf_name:
+        required: true
+        type: string
+        description: "The name of the Azure Data Factory"
+
+      adf_pipeline_type:
+        required: true
+        type: choice
+        description: "The pipeline type in AIPIL to deploy"
+        options:
+          - job-run
+          - job-chain
+          - pil-sync
+          - data-cleansing
+          - metadata-extraction
+          - document-ingestion
+          - overall-orchestration
+      
+      adf_pipeline_deploy_action:
+        required: true
+        type: choice
+        description: "The action to create/update or delete the pipeline"
+        options:
+          - create
+          - update
+          - delete
+      
+      is_required_apim_subscription_key:
+        required: false
+        type: choice
+        description: "Whether the APIM subscription key is required"
+        options:
+          - "true"
+          - "false"
+        default: "false"
+
+
+jobs:
+  
+  deploy-adf-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set dynamic values based on the input values
+        id: set_env_config
+        run: |
+        
+        
+
+          PIPE_TYPE="${{ github.event.inputs.adf_pipeline_type }}"
+          case "$PIPE_TYPE" in
+            job-run)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-000-000_jobrun.json"
+              ;;
+            job-chain)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-001-000_jobchain.json"
+              ;;
+            pil-sync)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-002-000_pilsync.json"
+              ;;
+            data-cleansing)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-002-001_datacleansing.json"
+              ;;
+            metadata-extraction)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-002-002_metaext.json"
+              ;;
+            document-ingestion)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-002-003_docingestion.json"
+              ;;
+            overall-orchestration)
+              adf_pipeline_pth="adf/pipeline/aipil-datapipe-000-003-000_overallorch.json"
+              ;;
+            *) 
+              echo "Invalid pipeline type: $PIPE_TYPE"
+              exit 1
+              ;;
+          esac
+
+          echo "adf_pipeline_pth=$adf_pipeline_pth" >> $GITHUB_OUTPUT
+
+          DEPLOY_ACTION="${{ github.event.inputs.adf_pipeline_deploy_action }}"
+          case "$DEPLOY_ACTION" in
+            create)
+              adf_pipeline_deploy_action="create"
+              ;;
+            update)
+              adf_pipeline_deploy_action="update"
+              ;;
+            delete)
+              adf_pipeline_deploy_action="delete"
+              ;;
+            *)
+              echo "Invalid deploy action: $DEPLOY_ACTION"
+              exit 1
+              ;;
+          esac
+
+          echo "adf_pipeline_deploy_action=$adf_pipeline_deploy_action" >> $GITHUB_OUTPUT
+
+      - name: Deploy pipeline in Azure Data Factory
+        id: deploy_adf_pipeline
+        uses: ./actions/deploy-adf-pipeline
+        with:
+          adf_name: ${{ github.event.inputs.adf_name }}
+          adf_resource_group: ${{ github.event.inputs.resource_group_name }}
+          sp_app_id: ${{ vars.SP_USERNAME }}
+          sp_tenant_id: ${{ vars.SP_TENANTID }}
+          sp_secret: ${{ secrets.SP_PASSWORD }}
+          adf_pipeline_pth: ${{ steps.set_env_config.outputs.adf_pipeline_pth }}
+          adf_pipeline_deploy_action: ${{ steps.set_env_config.outputs.adf_pipeline_deploy_action }}
+          secret_placeholder_1: ${{ github.event.inputs.is_required_apim_subscription_key == 'true' && vars.APIM_SUBSCRIPTION_KEY_PLACEHOLDER || '' }}
+          secret_value_1: ${{ github.event.inputs.is_required_apim_subscription_key == 'true' && secrets.APIM_SUBSCRIPTION_KEY || '' }}
+
+      

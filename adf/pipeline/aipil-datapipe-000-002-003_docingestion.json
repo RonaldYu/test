@@ -1,0 +1,1143 @@
+{
+    "name": "aipil-datapipe-000-002-003_docingestion",
+    "properties": {
+        "description": "This pipeline is used to run the document ingestion process, including the below steps:\n1. pdf conversion\n2. markdown generation\n3. chunking\n4. embedding\n5. sync into AI Search",
+        "activities": [
+            {
+                "name": "set-pipeline-id",
+                "description": "set pipeline id for further tracking",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipeline_id",
+                    "value": {
+                        "value": "@if(\n    empty(pipeline().parameters.root_pipeline_id),\n    pipeline().RunId,\n    pipeline().parameters.root_pipeline_id\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "exec-pdfconversion",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "document-ingestion"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "pdf-conversion"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.pdfconversion_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": true,
+                        "taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.pdfconversion_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.pdfconversion_mainjob_run_n_workers",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-pdfconversion-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-pdfconversion",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "pdf_conversion",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-pdfconversion').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-fail-pdfconversion",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-pdfconversion",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_pdfconversion_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "exec-markdowngen",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-pdfconversion",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "document-ingestion"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "markdown-generation"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.markdowngen_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": true,
+                        "taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.markdowngen_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.markdowngen_mainjob_run_n_workers",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-fail-markdowngen",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-markdowngen",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_markdowngen_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-markdowngen-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-markdowngen",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "markdown_generation",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-markdowngen').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "exec-chunking",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-markdowngen",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "document-ingestion"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "chunking"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.chunking_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": true,
+                        "taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.chunking_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.chunking_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.chunking_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.chunking_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.chunking_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.chunking_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.chunking_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.chunking_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.chunking_mainjob_run_n_workers",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-fail-chunking",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-chunking",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_chunking_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-chunking-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-chunking",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "chunking",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-chunking').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "exec-embedding",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-chunking",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "document-ingestion"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "embedding"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.embedding_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": true,
+                        "taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.embedding_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.embedding_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.embedding_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.embedding_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.embedding_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.embedding_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.embedding_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.embedding_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.embedding_mainjob_run_n_workers",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-fail-embedding",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-embedding",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_embedding_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-embedding-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-embedding",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "embedding",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-embedding').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "exec-syncaisearch",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "exec-embedding",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "document-ingestion"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "sync-aisearch"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.syncaisearch_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": true,
+                        "taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.syncaisearch_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.syncaisearch_mainjob_run_n_workers",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-fail-syncaisearch",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-syncaisearch",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_syncaisearch_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-syncaisearch-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-syncaisearch",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "sync_aisearch",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-syncaisearch').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "if-pipeline-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set-fail-pdfconversion",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-markdowngen",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-chunking",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-embedding",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-syncaisearch",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(\n    variables('fail_pdfconversion_ind'),\n    or(\n        variables('fail_markdowngen_ind'),\n        or(\n            variables('fail_chunking_ind'),\n            or(\n                variables('fail_embedding_ind'),\n                variables('fail_syncaisearch_ind')\n            )\n        )\n    )\n)",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "raise-pipeline-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": {
+                                    "value": "@concat(\n    'The pipeline run failed due to an activity failure. Please check the activity grid below for more detailed information, including the following activities: ',\n    if(\n        variables('fail_pdfconversion_ind'),\n        '#PDFconversion ' , '' \n    ),\n    if(\n        variables('fail_markdowngen_ind'),\n        '#MarkdownGeneration ' , '' \n    ),\n    if(\n        variables('fail_chunking_ind'),\n        '#Chunking ' , '' \n    ),\n    if(\n        variables('fail_embedding_ind'),\n        '#Embedding ' , '' \n    ),\n    if(\n        variables('fail_syncaisearch_ind'),\n        '#SyncAISearch ' , '' \n    )\n)",
+                                    "type": "Expression"
+                                },
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "concurrency": 1,
+        "parameters": {
+            "datapipe_apim_baseurl": {
+                "type": "string"
+            },
+            "datapipe_apim_subkey": {
+                "type": "string"
+            },
+            "root_pipeline_id": {
+                "type": "string"
+            },
+            "pipeline_rpt_routepth": {
+                "type": "string"
+            },
+            "taskqueue_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "taskqueue_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "pdfconversion_job_names": {
+                "type": "array"
+            },
+            "pdfconversion_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "markdowngen_job_names": {
+                "type": "array"
+            },
+            "markdowngen_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "chunking_job_names": {
+                "type": "array"
+            },
+            "chunking_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "embedding_job_names": {
+                "type": "array"
+            },
+            "embedding_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "syncaisearch_job_names": {
+                "type": "array"
+            },
+            "syncaisearch_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "pdfconversion_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "pdfconversion_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "markdowngen_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "markdowngen_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "markdowngen_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "markdowngen_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "markdowngen_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "markdowngen_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "markdowngen_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "markdowngen_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "chunking_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "chunking_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "chunking_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "chunking_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "chunking_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "chunking_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "chunking_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "chunking_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "embedding_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "embedding_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "embedding_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "embedding_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "embedding_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "embedding_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "embedding_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "embedding_mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "syncaisearch_mainjob_rpt_routepth": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "pipeline_id": {
+                "type": "String"
+            },
+            "fail_pdfconversion_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_markdowngen_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_chunking_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_embedding_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "fail_syncaisearch_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [
+            "aipil",
+            "data-pipe",
+            "document-ingestion"
+        ],
+        "lastPublishTime": "2025-10-30T06:13:59Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

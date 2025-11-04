@@ -1,0 +1,516 @@
+{
+    "name": "aipil-datapipe-000-000-000_jobrun",
+    "properties": {
+        "description": "This is used to trigger one job/task within AIPIL data pipeline. The flow is \n1. check if any job worker available.\n2. use worker id to trigger job run\n3. wait until job run (worker) finished",
+        "activities": [
+            {
+                "name": "set-pipeline-id",
+                "description": "set pipeline id for further tracking",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipeline_id",
+                    "value": {
+                        "value": "@if(\n    empty(pipeline().parameters.root_pipeline_id),\n    pipeline().RunId,\n    pipeline().parameters.root_pipeline_id\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "until-tirgger-jobrun",
+                "description": "check if any job worker available and use that worker id to trigger job run",
+                "type": "Until",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(\n    variables('is_trigger_jobrun'),\n    variables('err_trigger_jobrun')\n)",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "check-available-worker",
+                            "type": "WebActivity",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.00:10:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "GET",
+                                "headers": {
+                                    "Ocp-Apim-Subscription-Key": {
+                                        "value": "@pipeline().parameters.datapipe_apim_subkey",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": {
+                                    "value": "@concat(\n    pipeline().parameters.datapipe_apim_baseurl, \n    pipeline().parameters.triggerind_routepth,\n    '?pipeline_id=', variables('pipeline_id')\n)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "can-trigger-jobrun",
+                            "type": "Switch",
+                            "dependsOn": [
+                                {
+                                    "activity": "check-available-worker",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "on": {
+                                    "value": "@if(\n    activity('check-available-worker').output.can_trigger,\n    'Can Trigger Case',\n    'Cannot Trigger Case'\n)",
+                                    "type": "Expression"
+                                },
+                                "cases": [
+                                    {
+                                        "value": "Can Trigger Case",
+                                        "activities": [
+                                            {
+                                                "name": "trigger-jobrun",
+                                                "type": "WebActivity",
+                                                "dependsOn": [],
+                                                "policy": {
+                                                    "timeout": "0.00:10:00",
+                                                    "retry": 3,
+                                                    "retryIntervalInSeconds": 30,
+                                                    "secureOutput": false,
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "method": "POST",
+                                                    "headers": {
+                                                        "Ocp-Apim-Subscription-Key": {
+                                                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    "url": {
+                                                        "value": "@concat(\n    pipeline().parameters.datapipe_apim_baseurl,\n    pipeline().parameters.jobrun_routepth\n)",
+                                                        "type": "Expression"
+                                                    },
+                                                    "body": {
+                                                        "value": "{\n  \"worker_id\": \"@{activity('check-available-worker').output.worker_id}\",\n  \"pipeline_id\": \"@{variables('pipeline_id')}\"\n}",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "name": "set-if-trigger-jobrun",
+                                                "type": "SetVariable",
+                                                "dependsOn": [
+                                                    {
+                                                        "activity": "trigger-jobrun",
+                                                        "dependencyConditions": [
+                                                            "Succeeded"
+                                                        ]
+                                                    }
+                                                ],
+                                                "policy": {
+                                                    "secureOutput": false,
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "variableName": "is_trigger_jobrun",
+                                                    "value": {
+                                                        "value": "@activity('trigger-jobrun').output.has_trigger",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "name": "set-error-trigger-jobrun",
+                                                "type": "SetVariable",
+                                                "dependsOn": [
+                                                    {
+                                                        "activity": "trigger-jobrun",
+                                                        "dependencyConditions": [
+                                                            "Failed"
+                                                        ]
+                                                    }
+                                                ],
+                                                "policy": {
+                                                    "secureOutput": false,
+                                                    "secureInput": false
+                                                },
+                                                "userProperties": [],
+                                                "typeProperties": {
+                                                    "variableName": "err_trigger_jobrun",
+                                                    "value": {
+                                                        "value": "@equals(1, 1)",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "name": "wait-inbetween-trigger",
+                            "type": "Wait",
+                            "dependsOn": [
+                                {
+                                    "activity": "can-trigger-jobrun",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "waitTimeInSeconds": {
+                                    "value": "@if(\n    not(\n        and(\n            activity('check-available-worker').output.can_trigger,\n            variables('is_trigger_jobrun')\n        )\n    ), 1, pipeline().parameters.trigger_jobrun_wait_sec\n\n)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "set-error-check-available-worker",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "check-available-worker",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "err_trigger_jobrun",
+                                "value": {
+                                    "value": "@equals(1, 1)",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ],
+                    "timeout": "0.00:10:00"
+                }
+            },
+            {
+                "name": "until-finish-jobrun",
+                "type": "Until",
+                "dependsOn": [
+                    {
+                        "activity": "set-workerid",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(\n    not(\n        or(\n            equals(activity('get-processlog').output.job_status, 'RUNNING'),\n            equals(activity('get-processlog').output.job_status, 'PENDING')\n        )\n    ),\n    variables('err_finish_jobrun')\n)",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "get-processlog",
+                            "type": "WebActivity",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.00:10:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "GET",
+                                "headers": {
+                                    "Ocp-Apim-Subscription-Key": {
+                                        "value": "@pipeline().parameters.datapipe_apim_subkey",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": {
+                                    "value": "@concat(\n    pipeline().parameters.datapipe_apim_baseurl,\n    pipeline().parameters.processlog_routepth,\n    '?',\n    'worker_id=', variables('worker_id'),\n    '&pipeline_id=', variables('pipeline_id')\n)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "wait-inbetween-processlog",
+                            "type": "Wait",
+                            "dependsOn": [
+                                {
+                                    "activity": "get-processlog",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "waitTimeInSeconds": {
+                                    "value": "@if(\n    not(\n        or(\n            equals(activity('get-processlog').output.job_status, 'RUNNING'),\n            equals(activity('get-processlog').output.job_status, 'PENDING')\n        )\n    ), 1, pipeline().parameters.trigger_jobrun_wait_sec\n\n)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "set-error-processlog",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "get-processlog",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "err_finish_jobrun",
+                                "value": {
+                                    "value": "@equals(1, 1)",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ],
+                    "timeout": "0.03:00:00"
+                }
+            },
+            {
+                "name": "set-pipeline-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "if-fail-finish-jobrun",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "process_log",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@json(concat(\n  '{',\n  '\"job_name\":\"', activity('get-processlog').output.job_name, '\",',\n  '\"job_status\":\"', activity('get-processlog').output.job_status, '\",',\n  '\"worker_id\":\"', activity('get-processlog').output.worker_id, '\",',\n  '\"pipeline_id\":\"', activity('get-processlog').output.pipeline_id, '\",',\n  '\"process_create_dt\":\"', activity('get-processlog').output.process_create_dt, '\",',\n  '\"process_start_dt\":\"', activity('get-processlog').output.process_start_dt, '\",',\n  '\"process_end_dt\":\"', activity('get-processlog').output.process_end_dt, '\",',\n  '\"process_res\":', string(activity('get-processlog').output.process_res), ',',\n  '\"err_msg\":\"', activity('get-processlog').output.err_msg, '\",',\n  '\"ttl\":', activity('get-processlog').output.ttl, ',',\n  '\"update_dt\":\"', activity('get-processlog').output.update_dt, '\"',\n  '}'\n))"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "if-jobrun-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "if-fail-finish-jobrun",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@equals(activity('get-processlog').output.job_status, 'COMPLETED')",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "raise-jobrun-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": {
+                                    "value": "@activity('get-processlog').output.err_msg",
+                                    "type": "Expression"
+                                },
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "set-workerid",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "if-fail-trigger-jobrun",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "worker_id",
+                    "value": {
+                        "value": "@activity('check-available-worker').output.worker_id",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if-fail-trigger-jobrun",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "until-tirgger-jobrun",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@variables('err_trigger_jobrun')",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "fail-trigger-jobrun",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": "There is an error when calling api to check avaiable worker and trigger job run",
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "if-fail-finish-jobrun",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "until-finish-jobrun",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@variables('err_finish_jobrun')",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "fail-finish-jobrun",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": "There is an error when calling api to check prcoess log",
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "datapipe_apim_baseurl": {
+                "type": "string"
+            },
+            "datapipe_apim_subkey": {
+                "type": "string"
+            },
+            "triggerind_routepth": {
+                "type": "string"
+            },
+            "jobrun_routepth": {
+                "type": "string"
+            },
+            "processlog_routepth": {
+                "type": "string"
+            },
+            "root_pipeline_id": {
+                "type": "string"
+            },
+            "trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "check_processlog_wait_sec": {
+                "type": "int"
+            }
+        },
+        "variables": {
+            "pipeline_id": {
+                "type": "String"
+            },
+            "worker_id": {
+                "type": "String"
+            },
+            "is_trigger_jobrun": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "err_trigger_jobrun": {
+                "type": "Boolean",
+                "defaultValue": false
+            },
+            "err_finish_jobrun": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [
+            "aipil",
+            "data-pipe",
+            "functional"
+        ],
+        "lastPublishTime": "2025-10-30T06:13:57Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

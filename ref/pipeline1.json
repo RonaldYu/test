@@ -1,0 +1,36 @@
+{
+    "name": "pipeline1",
+    "properties": {
+        "activities": [
+            {
+                "name": "Set variable1",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "hi",
+                    "value": {
+                        "value": "@pipeline().parameters.x",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "x": {
+                "type": "string",
+                "defaultValue": "123"
+            }
+        },
+        "variables": {
+            "hi": {
+                "type": "String"
+            }
+        },
+        "annotations": []
+    }
+}

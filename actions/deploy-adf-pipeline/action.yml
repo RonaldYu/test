@@ -1,0 +1,87 @@
+name: "Deploy Pipeline in Azure Data Factory"
+description: "Deploy Pipeline in Azure Data Factory, including create/update or delete the pipeline"
+ 
+inputs:
+ 
+  adf_name:
+    description: "Name of Azure Data Factory"
+    required: true
+  adf_resource_group:
+    description: "Resource Group Name where Azure Data Factory is located"
+    required: true
+  sp_app_id:
+    description: "The application id of service principle used to login azure and deploy ADF"
+    required: true
+  sp_tenant_id:
+    description: "The tenant id of service principle used to login azure and deploy ADP"
+    required: true
+  sp_secret:
+    description: "The secrets of service principle used to login azure and deploy ADP"
+    required: true
+  adf_pipeline_pth:
+    description: "The json file contains a pipeline definition which will be published to ADF"
+    required: true
+  adf_pipeline_deploy_action:
+    description: "The action to create/update or delete the pipeline"
+    required: true
+  secret_placeholder_1:
+    description: "The placeholder of the first secret"
+    required: false
+  secret_value_1:
+    description: "The value of the first secret"
+    required: false
+  
+ 
+runs:
+  using: composite
+  steps:
+    - name: Record basic information of the action
+      id: record_basic_information
+      shell: bash
+      run: |
+        echo "Azure Resource Group: ${{ inputs.adf_resource_group }}" >> $GITHUB_STEP_SUMMARY
+        echo "Azure Data Factory Name: ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "Pipeline File Path: ${{ inputs.adf_pipeline_pth }}" >> $GITHUB_STEP_SUMMARY
+        echo "Action: ${{ inputs.adf_pipeline_deploy_action }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Log in Azure with Service principal
+      id: az_login
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          ls .
+          az config set extension.use_dynamic_install=yes_without_prompt;
+          login_output=$(az login --service-principal --username ${{ inputs.sp_app_id }} --password ${{ inputs.sp_secret }} --tenant ${{ inputs.sp_tenant_id }} --allow-no-subscriptions 2>&1);
+         
+          if echo "$login_output" | grep -q 'tenantId'; then
+              echo "is_login=ok" >> $GITHUB_OUTPUT
+          else
+              echo "is_login=fail" >> $GITHUB_OUTPUT
+          fi
+    
+    - name: Create or update a pipeline to Azure data factory
+      id: create_or_update_pipeline
+      if: steps.az_login.outputs.is_login == 'ok' && (inputs.adf_pipeline_deploy_action == 'create' || inputs.adf_pipeline_deploy_action == 'update')
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          pipeline_nm=$(cat ${{ inputs.adf_pipeline_pth }} | jq -r '.name')
+          pipeline_pr=$(cat ${{ inputs.adf_pipeline_pth }} | jq -c '.properties')
+
+          if [ -n "${{ inputs.secret_value_1 }}" ] && [ -n "${{ inputs.secret_placeholder_1 }}" ]; then
+            pipeline_pr=$(printf '%s' "$pipeline_pr" | jq --arg pwd "${{ inputs.secret_value_1 }}" --arg pwd_hlr "${{ inputs.secret_placeholder_1 }}" -c \
+              '(.. | select(type=="string")) |= gsub("\\$" + $pwd_hlr; $pwd)')
+          fi
+
+          az datafactory pipeline create --factory-name ${{ inputs.adf_name }} --pipeline "$pipeline_pr" --name $pipeline_nm --resource-group ${{ inputs.adf_resource_group }}
+          echo "Execute the action of ${{ inputs.adf_pipeline_deploy_action }} on the pipeline, $pipeline_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Delete a pipeline from Azure data factory
+      id: delete_pipeline
+      if: steps.az_login.outputs.is_login == 'ok' && inputs.adf_pipeline_deploy_action == 'delete'
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          pipeline_nm=$(cat ${{ inputs.adf_pipeline_pth }} | jq -r '.name')
+          az datafactory pipeline delete --factory-name ${{ inputs.adf_name }} --name $pipeline_nm --resource-group ${{ inputs.adf_resource_group }} --yes
+          echo "Execute the action of ${{ inputs.adf_pipeline_deploy_action }} on the pipeline, $pipeline_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,714 @@
+{
+    "name": "aipil-datapipe-000-001-000_jobchain",
+    "properties": {
+        "description": "This is used to run a job, including 2 steps:\n1. run task queue (Optional)\n2. run multiple main job in parallel",
+        "activities": [
+            {
+                "name": "set-pipeline-id",
+                "description": "set pipeline id for further tracking",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipeline_id",
+                    "value": {
+                        "value": "@if(\n    empty(pipeline().parameters.root_pipeline_id),\n    pipeline().RunId,\n    pipeline().parameters.root_pipeline_id\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-array-for-parallel-mainjob-workers",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "n_workers_array",
+                    "value": {
+                        "value": "@range(1, pipeline().parameters.mainjob_run_n_workers)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "run-mainjob-parallel",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "set-array-for-parallel-mainjob-workers",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "if-run-taskqueue",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@variables('n_workers_array')",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 50,
+                    "activities": [
+                        {
+                            "name": "exec-mainjob",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "aipil-datapipe-000-000-000_jobrun",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "datapipe_apim_baseurl": {
+                                        "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                                        "type": "Expression"
+                                    },
+                                    "datapipe_apim_subkey": {
+                                        "value": "@pipeline().parameters.datapipe_apim_subkey",
+                                        "type": "Expression"
+                                    },
+                                    "triggerind_routepth": {
+                                        "value": "@pipeline().parameters.mainjob_triggerind_routepth",
+                                        "type": "Expression"
+                                    },
+                                    "jobrun_routepth": {
+                                        "value": "@pipeline().parameters.mainjob_jobrun_routepth",
+                                        "type": "Expression"
+                                    },
+                                    "processlog_routepth": {
+                                        "value": "@pipeline().parameters.mainjob_processlog_routepth",
+                                        "type": "Expression"
+                                    },
+                                    "root_pipeline_id": {
+                                        "value": "@variables('pipeline_id')",
+                                        "type": "Expression"
+                                    },
+                                    "trigger_jobrun_wait_sec": {
+                                        "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                                        "type": "Expression"
+                                    },
+                                    "check_processlog_wait_sec": {
+                                        "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "set-fail-execute-mainjob",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "exec-mainjob",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "activity_fail_ind",
+                                "value": {
+                                    "value": "@equals(1, 1)",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "get-pipeline-report",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "run-mainjob-parallel",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:10:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "headers": {
+                        "Ocp-Apim-Subscription-Key": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(\n    pipeline().parameters.datapipe_apim_baseurl,\n    pipeline().parameters.pipeline_rpt_routepth,\n    '?pipeline_id=', variables('pipeline_id'),\n    concat('&job_names=', join(pipeline().parameters.job_names, '&job_names='))\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-pipeline-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "set-mainjob-report",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    },
+                    {
+                        "activity": "set-pipeline-report",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "process_summary",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@json(variables('process_summary'))"
+                            }
+                        },
+                        {
+                            "key": "taskqueue_process_detail",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@json(variables('taskqueue_process_detail'))"
+                            }
+                        },
+                        {
+                            "key": "mainjob_process_detail",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@json(variables('mainjob_process_detail'))"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "if-jobchain-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "get-pipeline-report",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@or(\n    greater(activity('get-pipeline-report').output.n_fail_or_uncompleted_workers, 0),\n    lessOrEquals(activity('get-pipeline-report').output.n_completed_workers, 0)\n)\n",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "raise-jobchain-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": {
+                                    "value": "@concat(\n  '{',\n  '\"pipeline_id\":\"', activity('get-pipeline-report').output.pipeline_id, '\",',\n  '\"job_names\":', string(activity('get-pipeline-report').output.job_names), ',',\n  '\"n_workers\":', activity('get-pipeline-report').output.n_workers, ',',\n  '\"n_completed_workers\":', activity('get-pipeline-report').output.n_completed_workers, ',',\n  '\"n_fail_or_uncompleted_workers\":', activity('get-pipeline-report').output.n_fail_or_uncompleted_workers, ',',\n  '\"ttl_process_duration_sec\":', activity('get-pipeline-report').output.ttl_process_duration_sec,\n  '}'\n)",
+                                    "type": "Expression"
+                                },
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "if-run-taskqueue",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "set-array-for-parallel-mainjob-workers",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@pipeline().parameters.if_include_taskqueue",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "exec-taskqueue",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "aipil-datapipe-000-000-000_jobrun",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "datapipe_apim_baseurl": {
+                                        "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                                        "type": "Expression"
+                                    },
+                                    "datapipe_apim_subkey": {
+                                        "value": "@pipeline().parameters.datapipe_apim_subkey",
+                                        "type": "Expression"
+                                    },
+                                    "triggerind_routepth": {
+                                        "value": "@pipeline().parameters.taskqueue_triggerind_routepth",
+                                        "type": "Expression"
+                                    },
+                                    "jobrun_routepth": {
+                                        "value": "@pipeline().parameters.taskqueue_jobrun_routepth",
+                                        "type": "Expression"
+                                    },
+                                    "processlog_routepth": {
+                                        "value": "@pipeline().parameters.taskqueue_processlog_routepth",
+                                        "type": "Expression"
+                                    },
+                                    "root_pipeline_id": {
+                                        "value": "@variables('pipeline_id')",
+                                        "type": "Expression"
+                                    },
+                                    "trigger_jobrun_wait_sec": {
+                                        "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                                        "type": "Expression"
+                                    },
+                                    "check_processlog_wait_sec": {
+                                        "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "get-taskqueue-report",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "exec-taskqueue",
+                                    "dependencyConditions": [
+                                        "Completed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.00:10:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "GET",
+                                "headers": {
+                                    "Ocp-Apim-Subscription-Key": {
+                                        "value": "@pipeline().parameters.datapipe_apim_subkey",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": {
+                                    "value": "@concat(\n    pipeline().parameters.datapipe_apim_baseurl,\n    pipeline().parameters.taskqueue_rpt_routepth,\n    '?pipeline_id=', variables('pipeline_id')\n)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "set-taskqueue-process-detail",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "get-taskqueue-report",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "taskqueue_process_detail",
+                                "value": {
+                                    "value": "@string(activity('get-taskqueue-report').output)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "set-fail-exec-taskqueue",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "exec-taskqueue",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "activity_fail_ind",
+                                "value": {
+                                    "value": "@equals(1, 1)",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "set-fail-get-taskqueue-report",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "get-taskqueue-report",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "activity_fail_ind",
+                                "value": {
+                                    "value": "@equals(1, 1)",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "get-mainjob-report",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "run-mainjob-parallel",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:10:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "headers": {
+                        "Ocp-Apim-Subscription-Key": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@concat(\n    pipeline().parameters.datapipe_apim_baseurl,\n    pipeline().parameters.mainjob_rpt_routepth,\n    '?pipeline_id=', variables('pipeline_id')\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-mainjob-report",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "get-mainjob-report",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "mainjob_process_detail",
+                    "value": {
+                        "value": "@string(activity('get-mainjob-report').output)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-pipeline-report",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "get-pipeline-report",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "process_summary",
+                    "value": {
+                        "value": "@string(activity('get-pipeline-report').output)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-get-pipeline-report",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "get-pipeline-report",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "activity_fail_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "set-fail-get-mainjob-report",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "get-mainjob-report",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "activity_fail_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if-pipeline-activity-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-output",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-get-pipeline-report",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "set-fail-get-mainjob-report",
+                        "dependencyConditions": [
+                            "Completed",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@variables('activity_fail_ind')",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "raise-activity-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": "There is at least one activity fail within a pipeline",
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "datapipe_apim_baseurl": {
+                "type": "string"
+            },
+            "datapipe_apim_subkey": {
+                "type": "string"
+            },
+            "root_pipeline_id": {
+                "type": "string"
+            },
+            "job_names": {
+                "type": "array"
+            },
+            "pipeline_rpt_routepth": {
+                "type": "string"
+            },
+            "if_include_taskqueue": {
+                "type": "bool"
+            },
+            "taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "taskqueue_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "taskqueue_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "mainjob_rpt_routepth": {
+                "type": "string"
+            },
+            "mainjob_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_run_n_workers": {
+                "type": "int"
+            }
+        },
+        "variables": {
+            "pipeline_id": {
+                "type": "String"
+            },
+            "n_workers_array": {
+                "type": "Array"
+            },
+            "taskqueue_process_detail": {
+                "type": "String"
+            },
+            "mainjob_process_detail": {
+                "type": "String"
+            },
+            "process_summary": {
+                "type": "String"
+            },
+            "activity_fail_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [
+            "aipil",
+            "data-pipe",
+            "functional"
+        ],
+        "lastPublishTime": "2025-10-30T06:13:58Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

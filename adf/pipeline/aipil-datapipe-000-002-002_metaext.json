@@ -1,0 +1,303 @@
+{
+    "name": "aipil-datapipe-000-002-002_metaext",
+    "properties": {
+        "description": "This pipeline is used to run \n1. metadata extraction",
+        "activities": [
+            {
+                "name": "set-pipeline-id",
+                "description": "set pipeline id for further tracking",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipeline_id",
+                    "value": {
+                        "value": "@if(\n    empty(pipeline().parameters.root_pipeline_id),\n    pipeline().RunId,\n    pipeline().parameters.root_pipeline_id\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "exec-metadata-extraction",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "set-pipeline-id",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [
+                    {
+                        "name": "project-name",
+                        "value": "aipil"
+                    },
+                    {
+                        "name": "service-name",
+                        "value": "data-pipe"
+                    },
+                    {
+                        "name": "job-name",
+                        "value": "metadata-extraction"
+                    },
+                    {
+                        "name": "task-name",
+                        "value": "metadata-extraction"
+                    }
+                ],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "aipil-datapipe-000-001-000_jobchain",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "datapipe_apim_baseurl": {
+                            "value": "@pipeline().parameters.datapipe_apim_baseurl",
+                            "type": "Expression"
+                        },
+                        "datapipe_apim_subkey": {
+                            "value": "@pipeline().parameters.datapipe_apim_subkey",
+                            "type": "Expression"
+                        },
+                        "root_pipeline_id": {
+                            "value": "@variables('pipeline_id')",
+                            "type": "Expression"
+                        },
+                        "job_names": {
+                            "value": "@pipeline().parameters.metaext_job_names",
+                            "type": "Expression"
+                        },
+                        "pipeline_rpt_routepth": {
+                            "value": "@pipeline().parameters.pipeline_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "if_include_taskqueue": true,
+                        "taskqueue_triggerind_routepth": {
+                            "value": "@pipeline().parameters.metaext_taskqueue_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_jobrun_routepth": {
+                            "value": "@pipeline().parameters.metaext_taskqueue_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_processlog_routepth": {
+                            "value": "@pipeline().parameters.metaext_taskqueue_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_rpt_routepth": {
+                            "value": "@pipeline().parameters.metaext_taskqueue_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "taskqueue_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "taskqueue_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.taskqueue_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_triggerind_routepth": {
+                            "value": "@pipeline().parameters.metaext_mainjob_triggerind_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_jobrun_routepth": {
+                            "value": "@pipeline().parameters.metaext_mainjob_jobrun_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_processlog_routepth": {
+                            "value": "@pipeline().parameters.metaext_mainjob_processlog_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_rpt_routepth": {
+                            "value": "@pipeline().parameters.metaext_mainjob_rpt_routepth",
+                            "type": "Expression"
+                        },
+                        "mainjob_trigger_jobrun_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_trigger_jobrun_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_check_processlog_wait_sec": {
+                            "value": "@pipeline().parameters.mainjob_check_processlog_wait_sec",
+                            "type": "Expression"
+                        },
+                        "mainjob_run_n_workers": {
+                            "value": "@pipeline().parameters.metaext_mainjob_run_n_workers",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "set-metaext-extraction-output",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-metadata-extraction",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pipelineReturnValue",
+                    "value": [
+                        {
+                            "key": "metadata_extraction",
+                            "value": {
+                                "type": "Expression",
+                                "content": "@activity('exec-metadata-extraction').output.pipelineReturnValue"
+                            }
+                        }
+                    ],
+                    "setSystemVariable": true
+                }
+            },
+            {
+                "name": "set-fail-metadata-extraction",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "exec-metadata-extraction",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "fail_metadata_extraction_ind",
+                    "value": {
+                        "value": "@equals(1, 1)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "if-pipeline-fail",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "set-fail-metadata-extraction",
+                        "dependencyConditions": [
+                            "Skipped",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@variables('fail_metadata_extraction_ind')",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "raise-pipeline-fail",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": {
+                                    "value": "@concat(\n    'The pipeline run failed due to an activity failure. Please check the activity grid below for more detailed information, including the following activities: ',\n    if(\n        variables('fail_metadata_extraction_ind'),\n        '#MetadataExtraction ' , '' \n    )\n)",
+                                    "type": "Expression"
+                                },
+                                "errorCode": "500"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "concurrency": 1,
+        "parameters": {
+            "datapipe_apim_baseurl": {
+                "type": "string"
+            },
+            "datapipe_apim_subkey": {
+                "type": "string"
+            },
+            "root_pipeline_id": {
+                "type": "string"
+            },
+            "pipeline_rpt_routepth": {
+                "type": "string"
+            },
+            "taskqueue_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "taskqueue_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_trigger_jobrun_wait_sec": {
+                "type": "int"
+            },
+            "mainjob_check_processlog_wait_sec": {
+                "type": "int"
+            },
+            "metaext_job_names": {
+                "type": "array"
+            },
+            "metaext_mainjob_run_n_workers": {
+                "type": "int"
+            },
+            "metaext_taskqueue_triggerind_routepth": {
+                "type": "string"
+            },
+            "metaext_taskqueue_jobrun_routepth": {
+                "type": "string"
+            },
+            "metaext_taskqueue_processlog_routepth": {
+                "type": "string"
+            },
+            "metaext_taskqueue_rpt_routepth": {
+                "type": "string"
+            },
+            "metaext_mainjob_triggerind_routepth": {
+                "type": "string"
+            },
+            "metaext_mainjob_jobrun_routepth": {
+                "type": "string"
+            },
+            "metaext_mainjob_processlog_routepth": {
+                "type": "string"
+            },
+            "metaext_mainjob_rpt_routepth": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "pipeline_id": {
+                "type": "String"
+            },
+            "fail_metadata_extraction_ind": {
+                "type": "Boolean",
+                "defaultValue": false
+            }
+        },
+        "annotations": [
+            "aipil",
+            "data-pipe",
+            "metadata-extraction"
+        ],
+        "lastPublishTime": "2025-10-30T06:13:59Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
