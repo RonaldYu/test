@@ -117,11 +117,11 @@ runs:
           fi
 
           # Start or stop the trigger
-          if [ "$inputs.adf_trigger_deploy_action" = "start" ]; then
+          if [ "${{ inputs.adf_trigger_deploy_action }}" = "start" ]; then
             echo "Calling start trigger API..."
             triggered_start_res=$(az datafactory trigger start --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} 2>&1)
             echo $triggered_start_res
-          elif [ "$inputs.adf_trigger_deploy_action" = "stop" ]; then
+          elif [ "${{ inputs.adf_trigger_deploy_action }}" = "stop" ]; then
             echo "Calling stop trigger API..."
             triggered_stop_res=$(az datafactory trigger stop --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} 2>&1)
             echo $triggered_stop_res
@@ -129,9 +129,9 @@ runs:
 
           # Check if the trigger is started or stopped after the action
           updated_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
-          if [ "$updated_state" = "Started" ] && [ "$inputs.adf_trigger_deploy_action" = "start" ]; then
+          if [ "$updated_state" = "Started" ] && [ "${{ inputs.adf_trigger_deploy_action }}" = "start" ]; then
             echo "Trigger $trigger_nm is started after the action"
-          elif [ "$updated_state" = "Stopped" ] && [ "$inputs.adf_trigger_deploy_action" = "stop" ]; then
+          elif [ "$updated_state" = "Stopped" ] && [ "${{ inputs.adf_trigger_deploy_action }}" = "stop" ]; then
             echo "Trigger $trigger_nm is stopped after the action"
           else
             echo "Trigger $trigger_nm is still $updated_state after the action"
