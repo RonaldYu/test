@@ -48,8 +48,7 @@ on:
 jobs:
   
   deploy-adf-trigger:
-    runs-on: ${{ github.ref_name == 'main' && 'pru-phkl-all-prod-linux-runner-01' || 'pru-phkl-all-nprd-linux-runner-01' }}
-    environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'uat' || github.ref_name == 'feature/deploy-dev' && 'dev' || 'dev'}}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
