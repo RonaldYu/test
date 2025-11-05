@@ -106,7 +106,7 @@ jobs:
           sp_secret: ${{ secrets.SP_PASSWORD }}
           adf_trigger_pth: ${{ steps.set_env_config.outputs.adf_trigger_pth }}
           adf_trigger_deploy_action: ${{ steps.set_env_config.outputs.adf_trigger_deploy_action }}
-          enable_auto_start: ${{ steps.set_env_config.outputs.enable_auto_start }}
+          enable_auto_start: ${{ github.event.inputs.enable_auto_start }}
           secret_placeholder_1: ${{ github.event.inputs.is_required_apim_subscription_key == 'true' && vars.APIM_SUBSCRIPTION_KEY_PLACEHOLDER || '' }}
           secret_value_1: ${{ github.event.inputs.is_required_apim_subscription_key == 'true' && secrets.APIM_SUBSCRIPTION_KEY || '' }}
 
