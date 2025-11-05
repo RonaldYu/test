@@ -90,7 +90,7 @@ runs:
             --name $trigger_nm \
             --resource-group ${{ inputs.adf_resource_group }}
           
-          if [ "$enable_auto_start" = "true"]; then
+          if [ "${{ inputs.enable_auto_start }}" = "true"]; then
             az datafactory trigger start \
               --factory-name ${{ inputs.adf_name }} \
               --name $trigger_nm \
