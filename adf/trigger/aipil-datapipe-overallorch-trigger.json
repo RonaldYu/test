@@ -138,8 +138,8 @@
         "type": "ScheduleTrigger",
         "typeProperties": {
             "recurrence": {
-                "frequency": "Hour",
-                "interval": 4,
+                "frequency": "Minute",
+                "interval": 10,
                 "startTime": "2025-12-01T19:57:00",
                 "timeZone": "China Standard Time"
             }
