@@ -41,10 +41,12 @@ runs:
       id: record_basic_information
       shell: bash
       run: |
-        echo "Azure Resource Group: ${{ inputs.adf_resource_group }}" >> $GITHUB_STEP_SUMMARY
-        echo "Azure Data Factory Name: ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "Trigger File Path: ${{ inputs.adf_trigger_pth }}" >> $GITHUB_STEP_SUMMARY
-        echo "Action: ${{ inputs.adf_trigger_deploy_action }}" >> $GITHUB_STEP_SUMMARY
+        echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Azure Resource Group | ${{ inputs.adf_resource_group }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Azure Data Factory Name | ${{ inputs.adf_name }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Trigger File Path | ${{ inputs.adf_trigger_pth }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Action | ${{ inputs.adf_trigger_deploy_action }} |" >> $GITHUB_STEP_SUMMARY
 
     - name: Log in Azure with Service principal
       id: az_login
