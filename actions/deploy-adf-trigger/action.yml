@@ -110,12 +110,21 @@ runs:
             exec_result="Success"
           else
             exec_result="Failed"
+            exec_err_summary="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
+          fi
+
+          if [ "$enable_auto_start" = "true"] && [ "updated_state" = "Stopped" ]; then
+            exec_result="Failed"
+            exec_err_summary="The trigger is found but not started since auto start is enabled in workflow"
           fi
           
           echo "## Excution Result of create or update ADF Trigger action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -155,14 +164,21 @@ runs:
             exec_result="Success"
           elif [ "$updated_state" = "Stopped" ] && [ "${{ inputs.adf_trigger_deploy_action }}" = "stop" ]; then
             exec_result="Success"
+          elif [ "$updated_state" = "NotFound" ]; then
+            exec_result="Failed"
+            exec_err_summary="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
           else
             exec_result="Failed"
+            exec_err_summary="The trigger is found but its state is $updated_state which is not expected"
           fi
 
           echo "## Excution Result of start or stop ADF Trigger action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -200,12 +216,16 @@ runs:
             exec_result="Success"
           else
             exec_result="Failed"
+            exec_err_summary="The trigger is not deleted in Azure Data Factory ${{ inputs.adf_name }}"
           fi
           
           echo "## Excution Result of delete ADF Trigger action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "$exec_result" = "Failed" ]; then

@@ -87,12 +87,16 @@ runs:
             exec_result="Success"
           else
             exec_result="Failed"
+            exec_err_summary="The pipeline is not found in Azure Data Factory ${{ inputs.adf_name }}"
           fi
 
           echo "## Excution Result of create or update ADF Pipeline action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Pipeline Name | $pipeline_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -113,12 +117,16 @@ runs:
             exec_result="Success"
           else
             exec_result="Failed"
+            exec_err_summary="The pipeline is not deleted in Azure Data Factory ${{ inputs.adf_name }}"
           fi
 
           echo "## Excution Result of delete ADF Pipeline action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Pipeline Name | $pipeline_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "$exec_result" = "Failed" ]; then
