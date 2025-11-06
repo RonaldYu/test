@@ -124,7 +124,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -178,7 +178,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -225,7 +225,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Error Summary | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "$exec_result" = "Failed" ]; then
