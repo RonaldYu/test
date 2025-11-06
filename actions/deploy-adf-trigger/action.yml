@@ -41,6 +41,7 @@ runs:
       id: record_basic_information
       shell: bash
       run: |
+        echo "## Record basic information of the action" >> $GITHUB_STEP_SUMMARY
         echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
         echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
         echo "| Azure Resource Group | ${{ inputs.adf_resource_group }} |" >> $GITHUB_STEP_SUMMARY
@@ -98,9 +99,12 @@ runs:
               --name $trigger_nm \
               --resource-group ${{ inputs.adf_resource_group }}
           fi
-          
-          echo "Execute the action of ${{ inputs.adf_trigger_deploy_action }} on the trigger, $trigger_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
 
+          updated_state=$(az datafactory trigger show --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} --query "properties.runtimeState" -o tsv 2>/dev/null || echo "NotFound")
+          echo "## Excution Result" >> $GITHUB_STEP_SUMMARY
+          echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADF Trigger State | $updated_state |" >> $GITHUB_STEP_SUMMARY
+          
 
     - name: Start or stop a trigger from Azure data factory
       id: start_or_stop_trigger
@@ -140,7 +144,9 @@ runs:
             exit 1
           fi
 
-          echo "Execute the action of ${{ inputs.adf_trigger_deploy_action }} on the trigger, $trigger_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "## Excution Result" >> $GITHUB_STEP_SUMMARY
+          echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADF Trigger State | $updated_state |" >> $GITHUB_STEP_SUMMARY
 
           
     - name: Delete a trigger from Azure data factory
@@ -177,4 +183,6 @@ runs:
             exit 1
           fi
 
-          echo "Execute the action of ${{ inputs.adf_trigger_deploy_action }} on the trigger, $trigger_nm, in Azure Data Factory, ${{ inputs.adf_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "## Excution Result" >> $GITHUB_STEP_SUMMARY
+          echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADF Trigger State | $deleted_state |" >> $GITHUB_STEP_SUMMARY

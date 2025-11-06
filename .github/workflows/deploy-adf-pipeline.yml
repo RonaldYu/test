@@ -54,12 +54,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Display workflow inputs
+        run: |
+          echo "## Workflow Inputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Input | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group Name | ${{ github.event.inputs.resource_group_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Azure Data Factory Name | ${{ github.event.inputs.adf_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pipeline Type | ${{ github.event.inputs.adf_pipeline_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy Action | ${{ github.event.inputs.adf_pipeline_deploy_action }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Required APIM Subscription Key | ${{ github.event.inputs.is_required_apim_subscription_key }} |" >> $GITHUB_STEP_SUMMARY
       - name: Set dynamic values based on the input values
         id: set_env_config
         run: |
         
-        
-
           PIPE_TYPE="${{ github.event.inputs.adf_pipeline_type }}"
           case "$PIPE_TYPE" in
             job-run)
@@ -109,6 +118,8 @@ jobs:
           esac
 
           echo "adf_pipeline_deploy_action=$adf_pipeline_deploy_action" >> $GITHUB_OUTPUT
+          
+
 
       - name: Deploy pipeline in Azure Data Factory
         id: deploy_adf_pipeline
