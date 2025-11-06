@@ -110,12 +110,12 @@ runs:
             exec_result="Success"
           else
             exec_result="Failed"
-            exec_err_summary="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
+            exec_remark="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
           fi
 
           if [ "${{ inputs.enable_auto_start }}" = "true" ] && [ "$updated_state" = "Stopped" ]; then
             exec_result="Failed"
-            exec_err_summary="The trigger is found but not started since auto start is enabled in workflow"
+            exec_remark="The trigger is found but not started since auto start is enabled in workflow"
           fi
           
           echo "## Excution Result of create or update ADF Trigger action" >> $GITHUB_STEP_SUMMARY
@@ -124,7 +124,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Remark | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -149,13 +149,13 @@ runs:
 
           # Start or stop the trigger
           if [ "${{ inputs.adf_trigger_deploy_action }}" = "start" ]; then
-            echo "Calling start trigger API..."
-            triggered_start_res=$(az datafactory trigger start --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} 2>&1)
-            echo $triggered_start_res
+            
+            az datafactory trigger start --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }}
+            
           elif [ "${{ inputs.adf_trigger_deploy_action }}" = "stop" ]; then
-            echo "Calling stop trigger API..."
-            triggered_stop_res=$(az datafactory trigger stop --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }} 2>&1)
-            echo $triggered_stop_res
+            
+            az datafactory trigger stop --factory-name ${{ inputs.adf_name }} --name $trigger_nm --resource-group ${{ inputs.adf_resource_group }}
+            
           fi
 
           # Check if the trigger is started or stopped after the action
@@ -166,10 +166,10 @@ runs:
             exec_result="Success"
           elif [ "$updated_state" = "NotFound" ]; then
             exec_result="Failed"
-            exec_err_summary="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
+            exec_remark="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
           else
             exec_result="Failed"
-            exec_err_summary="The trigger is found but its state is $updated_state which is not expected"
+            exec_remark="The trigger is found but its state is $updated_state which is not expected"
           fi
 
           echo "## Excution Result of start or stop ADF Trigger action" >> $GITHUB_STEP_SUMMARY
@@ -178,7 +178,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Remark | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -216,7 +216,7 @@ runs:
             exec_result="Success"
           else
             exec_result="Failed"
-            exec_err_summary="The trigger is not deleted in Azure Data Factory ${{ inputs.adf_name }}"
+            exec_remark="The trigger is not deleted in Azure Data Factory ${{ inputs.adf_name }}"
           fi
           
           echo "## Excution Result of delete ADF Trigger action" >> $GITHUB_STEP_SUMMARY
@@ -225,7 +225,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Trigger Name | $trigger_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Remark | $exec_err_summary |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "$exec_result" = "Failed" ]; then
