@@ -65,6 +65,7 @@ jobs:
           echo "| Pipeline Type | ${{ github.event.inputs.adf_pipeline_type }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Deploy Action | ${{ github.event.inputs.adf_pipeline_deploy_action }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Required APIM Subscription Key | ${{ github.event.inputs.is_required_apim_subscription_key }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
       - name: Set dynamic values based on the input values
         id: set_env_config
         run: |

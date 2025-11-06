@@ -65,7 +65,8 @@ jobs:
           echo "| Deploy Action | ${{ github.event.inputs.adf_trigger_deploy_action }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Enable Auto Start | ${{ github.event.inputs.enable_auto_start }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Required APIM Subscription Key | ${{ github.event.inputs.is_required_apim_subscription_key }} |" >> $GITHUB_STEP_SUMMARY
-
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
       - name: Set dynamic values based on the input values
         id: set_env_config
         run: |

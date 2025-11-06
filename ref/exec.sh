@@ -12,6 +12,9 @@ pipeline_nm=$(cat $adf_pipeline_pth | jq -r '.name')
 pipeline_pr=$(cat $adf_pipeline_pth | jq -c '.properties')
 
 
+
+existing_pipeline=$(az datafactory pipeline show --factory-name sdafsadfadf --name aipil-datapipe-000-003-000_overallorch --resource-group test-rg --query "name" -o tsv 2>/dev/null || echo "NotFound")
+
 az datafactory pipeline create --factory-name $adf_name --pipeline "$pipeline_pr" --name $pipeline_nm --resource-group $adf_resource_group
 az datafactory pipeline delete --factory-name $adf_name --name $pipeline_nm --resource-group $adf_resource_group --yes
 
