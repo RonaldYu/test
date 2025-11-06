@@ -113,7 +113,7 @@ runs:
             exec_err_summary="The trigger is not found in Azure Data Factory ${{ inputs.adf_name }}"
           fi
 
-          if [ "$enable_auto_start" = "true"] && [ "updated_state" = "Stopped" ]; then
+          if [ "${{ inputs.enable_auto_start }}" = "true" ] && [ "$updated_state" = "Stopped" ]; then
             exec_result="Failed"
             exec_err_summary="The trigger is found but not started since auto start is enabled in workflow"
           fi
