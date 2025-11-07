@@ -1,0 +1,179 @@
+name: "Deploy Alert for Azure Data Factory"
+description: "Deploy Pipeline in Azure Data Factory, including create/update or delete the pipeline"
+ 
+inputs:
+ 
+  sp_app_id:
+    description: "The application id of service principle used to login azure and deploy ADF"
+    required: true
+  sp_tenant_id:
+    description: "The tenant id of service principle used to login azure and deploy ADP"
+    required: true
+  sp_secret:
+    description: "The secrets of service principle used to login azure and deploy ADP"
+    required: true
+  alert_arm_template_pth:
+    description: "The ARM template file contains an alert rule definition which will be published to Azure Monitor"
+    required: true
+  alert_deploy_action:
+    description: "The action to create/update or delete the alert rule"
+    required: true
+  
+ 
+runs:
+  using: composite
+  steps:
+    - name: Record basic information of the action
+      id: record_basic_information
+      shell: bash
+      run: |
+        echo "## Record basic information of the deploy Alert Rule action" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| ARM Template File Path | ${{ inputs.alert_arm_template_pth }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Deploy Action | ${{ inputs.alert_deploy_action }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+    - name: Log in Azure with Service principal
+      id: az_login
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          ls .
+          az config set extension.use_dynamic_install=yes_without_prompt;
+          login_output=$(az login --service-principal --username ${{ inputs.sp_app_id }} --password ${{ inputs.sp_secret }} --tenant ${{ inputs.sp_tenant_id }} --allow-no-subscriptions 2>&1);
+         
+          if echo "$login_output" | grep -q 'tenantId'; then
+              echo "is_login=ok" >> $GITHUB_OUTPUT
+          else
+              echo "is_login=fail" >> $GITHUB_OUTPUT
+          fi
+    
+    - name: Create or update an alert rule to Azure Monitor
+      id: create_or_update_alert_rule
+      if: steps.az_login.outputs.is_login == 'ok' && (inputs.alert_deploy_action == 'create' || inputs.alert_deploy_action == 'update')
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          resource_group_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.resource_group_name')
+          deployment_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.deployment_name')
+          scheduledqueryrules_alert_rule_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.scheduledqueryrules_alert_rule_name')
+          loganalytics_wksp_externalid=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.loganalytics_wksp_externalid')
+
+          deploy_output=$(az deployment group create --resource-group $resource_group_name --template-file ${{ inputs.alert_arm_template_pth }} --name $deployment_name 2>&1);
+          provisioningState=$(echo $deploy_output | jq -r '.properties.provisioningState')
+
+          if [ "$provisioningState" = "Succeeded" ]; then
+            exec_result="Success"
+          else
+            exec_result="Failed"
+            exec_remark="The alert rule $scheduledqueryrules_alert_rule_name is not created in Azure Monitor with log analytics workspace $loganalytics_wksp_externalid, error: $deploy_output"
+          fi
+
+
+          echo "## Excution Result of create or update Alert Rule action" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group Name | $resource_group_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment Name | $deployment_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scheduled Query Rules Alert Rule Name | $scheduledqueryrules_alert_rule_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Log Analytics Workspace External ID | $loganalytics_wksp_externalid |" >> $GITHUB_STEP_SUMMARY
+          echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$exec_result" = "Failed" ]; then
+            exit 1
+          fi
+
+    - name: Cancel the deployment of Azure Monitor Alert Rule
+      id: cancel_alter_rule_deployment
+      if: steps.az_login.outputs.is_login == 'ok' && inputs.alert_deploy_action == 'cancel_deployment'
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          resource_group_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.resource_group_name')
+          deployment_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.deployment_name')
+          scheduledqueryrules_alert_rule_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.scheduledqueryrules_alert_rule_name')
+          loganalytics_wksp_externalid=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.loganalytics_wksp_externalid')
+          
+          cancel_output=$(az deployment group cancel --resource-group $resource_group_name --name $deployment_name 2>&1);
+          if [ "$cancel_output" = "" ]; then
+            check_output=$(az deployment group show --resource-group $resource_group_name --name $deployment_name 2>&1);
+            provisioningState=$(echo $check_output | jq -r '.properties.provisioningState')
+            if [ "$provisioningState" = "Canceled" ]; then
+              exec_result="Success"
+            else
+              exec_result="Failed"
+              exec_remark="The deployment of alert rule $deployment_name is not canceled with state: $check_output"
+            fi
+          else
+            exec_result="Failed"
+            exec_remark="The deployment of alert rule $deployment_name is not canceled, error: $cancel_output"
+          fi
+
+
+          echo "## Excution Result of cancel Alert Rule deployment action" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group Name | $resource_group_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment Name | $deployment_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scheduled Query Rules Alert Rule Name | $scheduledqueryrules_alert_rule_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Log Analytics Workspace External ID | $loganalytics_wksp_externalid |" >> $GITHUB_STEP_SUMMARY
+          echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+
+          if [ "$exec_result" = "Failed" ]; then
+            exit 1
+          fi
+
+    - name: Delete an alert rule to Azure Monitor
+      id: delete_alert_rule
+      if: steps.az_login.outputs.is_login == 'ok' && inputs.adf_pipeline_deploy_action == 'delete'
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          resource_group_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.resource_group_name')
+          deployment_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.deployment_name')
+          scheduledqueryrules_alert_rule_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.scheduledqueryrules_alert_rule_name')
+          loganalytics_wksp_externalid=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.loganalytics_wksp_externalid')
+          
+          
+          delete_output=$(az monitor scheduled-query delete --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name --yes 2>&1);
+          if [ "$delete_output" = "" ]; then
+            check_output=$(az monitor scheduled-query show --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name 2>&1);
+            alert_name=$(echo $check_output | jq -r '.name')
+            if [ "$alert_name" = "$scheduledqueryrules_alert_rule_name" ]; then
+              exec_result="Success"
+            else
+              exec_result="Failed"
+              exec_remark="The alert rule $scheduledqueryrules_alert_rule_name is not deleted in Azure Monitor with log analytics workspace $loganalytics_wksp_externalid, error: $check_output"
+            fi
+          else
+            exec_result="Failed"
+            exec_remark="The alert rule $scheduledqueryrules_alert_rule_name is not deleted in Azure Monitor with log analytics workspace $loganalytics_wksp_externalid, error: $delete_output"
+          fi
+
+
+          echo "## Excution Result of delete Alert Rule action" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group Name | $resource_group_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment Name | $deployment_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scheduled Query Rules Alert Rule Name | $scheduledqueryrules_alert_rule_name |" >> $GITHUB_STEP_SUMMARY
+          echo "| Log Analytics Workspace External ID | $loganalytics_wksp_externalid |" >> $GITHUB_STEP_SUMMARY
+          echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$exec_result" = "Failed" ]; then
+            exit 1
+          fi

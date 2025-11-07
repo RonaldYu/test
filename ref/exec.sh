@@ -52,3 +52,35 @@ if [ "$existing_state" = "Started" ]; then
 az datafactory trigger start --factory-name $adf_name --name $trigger_nm --resource-group $adf_resource_group
 fi
 az datafactory trigger delete --factory-name $adf_name --name $trigger_nm --resource-group $adf_resource_group --yes
+
+
+
+
+
+
+deploy_output=$(az deployment group create --resource-group test-rg  --template-file overallorch-fail-alert.json --name overallorch-fail-alert2 2>&1);
+
+cancel_output=$(az deployment group cancel --name overallorch-fail-alert2 --resource-group test-rg 2>&1);
+
+az deployment group create --resource-group test-rg  --template-file overallorch-fail-alert.json --name overallorch-fail-alert2 --no-wait
+
+az deployment group cancel --name overallorch-fail-alert2 --resource-group test-rg
+
+
+az deployment group show  --name overallorch-fail-alert2 --resource-group test-rg
+
+az deployment group delete --name overallorch-fail-alert2 --resource-group test-rg
+
+
+delete_output=$(az monitor scheduled-query delete --name aipil-alert-rule-test2 --resource-group test-rg --yes 2>&1);
+if [ "$delete_output" = "" ]; then
+    echo "Success"
+else
+    echo "Failed"
+fi
+
+az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group test-rg
+
+check_output=$(az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group test-rg 2>&1);
+alert_name=$(echo $check_output | jq -r '.name')
+echo "Alert name: $alert_name"

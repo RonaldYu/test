@@ -1,0 +1,94 @@
+name: Deploy Alert for Azure Data Factory (Create/Update, Cancel Deployment or Delete)
+run-name: "Deploy Alert for Azure Data Factory | ${{ github.event.inputs.alert_rule_type}} | ${{ github.event.inputs.alert_rule_deploy_action }}"
+on:
+  workflow_dispatch:
+    inputs:
+
+      alert_rule_type:
+        required: true
+        type: choice
+        description: "The alert rule type in AIPIL to deploy"
+        options:
+          - overallorch-fail-alert
+          - pilsync-fail-alert
+          - metadata-extraction-fail-alert
+          - document-ingestion-fail-alert
+      
+      alert_rule_deploy_action:
+        required: true
+        type: choice
+        description: "The action to create/update, cancel deployment, or delete the alert rule"
+        options:
+          - create
+          - update
+          - cancel_deployment
+          - delete
+      
+
+
+jobs:
+  
+  deploy-adf-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display workflow inputs
+        run: |
+          echo "## Workflow Inputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Input | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Alert Rule Type | ${{ github.event.inputs.alert_rule_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy Action | ${{ github.event.inputs.alert_rule_deploy_action }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      - name: Set dynamic values based on the input values
+        id: set_env_config
+        run: |
+        
+          ALERT_RULE_TYPE="${{ github.event.inputs.alert_rule_type }}"
+          case "$ALERT_RULE_TYPE" in
+            job-run)
+              alert_rule_pth="adf/alert/overallorch-fail-alert.json"
+              ;;
+            *) 
+              echo "Invalid alert rule type: $ALERT_RULE_TYPE"
+              exit 1
+              ;;
+          esac
+
+          echo "alert_rule_pth=$alert_rule_pth" >> $GITHUB_OUTPUT
+
+          DEPLOY_ACTION="${{ github.event.inputs.alert_rule_deploy_action }}"
+          case "$DEPLOY_ACTION" in
+            create)
+              alert_rule_deploy_action="create"
+              ;;
+            update)
+              alert_rule_deploy_action="update"
+              ;;
+            delete)
+              alert_rule_deploy_action="delete"
+              ;;
+            *)
+              echo "Invalid alert rule deploy action: $alert_rule_deploy_action"
+              exit 1
+              ;;
+          esac
+
+          echo "alert_rule_deploy_action=$alert_rule_deploy_action" >> $GITHUB_OUTPUT
+          
+
+
+      - name: Deploy alert rule in Azure Monitor
+        id: deploy_alert_rule
+        uses: ./actions/deploy-adf-alert
+        with:
+          alert_arm_template_pth: ${{ steps.set_env_config.outputs.alert_arm_template_pth }}
+          alert_deploy_action: ${{ steps.set_env_config.outputs.alert_rule_deploy_action }}
+          sp_app_id: ${{ vars.SP_USERNAME }}
+          sp_tenant_id: ${{ vars.SP_TENANTID }}
+          sp_secret: ${{ secrets.SP_PASSWORD }}
+
+      
