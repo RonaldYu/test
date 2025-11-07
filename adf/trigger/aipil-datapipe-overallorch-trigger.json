@@ -45,7 +45,7 @@
                         "KNW_CLEANSING_TASK_QUEUE",
                         "KNW_CLEANSING"
                     ],
-                    "datacleansing_knwcleansing_mainjob_run_n_workers": 5,
+                    "datacleansing_knwcleansing_mainjob_run_n_workers": 1,
                     "datacleansing_knwcleansing_taskqueue_triggerind_routepth": "/knwcleansing/task-queue/trigger-indicator",
                     "datacleansing_knwcleansing_taskqueue_jobrun_routepth": "/knwcleansing/task-queue/bkg-tsk/job-run",
                     "datacleansing_knwcleansing_taskqueue_processlog_routepth": "/knwcleansing/task-queue/bkg-tsk/process-log",
@@ -58,7 +58,7 @@
                         "METADATA_EXTRACT_TASK_QUEUE",
                         "METADATA_EXTRACT"
                     ],
-                    "metadataext_metaext_mainjob_run_n_workers": 3,
+                    "metadataext_metaext_mainjob_run_n_workers": 1,
                     "metadataext_metaext_taskqueue_triggerind_routepth": "/pilmetainfoext/task-queue/trigger-indicator",
                     "metadataext_metaext_taskqueue_jobrun_routepth": "/pilmetainfoext/task-queue/bkg-tsk/job-run",
                     "metadataext_metaext_taskqueue_processlog_routepth": "/pilmetainfoext/task-queue/bkg-tsk/process-log",
@@ -71,27 +71,27 @@
                         "PDF_CONVERSION_TASK_QUEUE",
                         "PDF_CONVERSION"
                     ],
-                    "docingest_pdfconversion_mainjob_run_n_workers": 5,
+                    "docingest_pdfconversion_mainjob_run_n_workers": 1,
                     "docingest_markdowngen_job_names": [
                         "MARKDOWN_GENERATION_TASK_QUEUE",
                         "MARKDOWN_GENERATION"
                     ],
-                    "docingest_markdowngen_mainjob_run_n_workers": 10,
+                    "docingest_markdowngen_mainjob_run_n_workers": 1,
                     "docingest_chunking_job_names": [
                         "CHUNKING_TASK_QUEUE",
                         "CHUNKING"
                     ],
-                    "docingest_chunking_mainjob_run_n_workers": 5,
+                    "docingest_chunking_mainjob_run_n_workers": 1,
                     "docingest_embedding_job_names": [
                         "EMBEDDING_TASK_QUEUE",
                         "EMBEDDING"
                     ],
-                    "docingest_embedding_mainjob_run_n_workers": 5,
+                    "docingest_embedding_mainjob_run_n_workers": 1,
                     "docingest_syncaisearch_job_names": [
                         "SYNCAISEARCH_TASK_QUEUE",
                         "SYNCAISEARCH"
                     ],
-                    "docingest_syncaisearch_mainjob_run_n_workers": 5,
+                    "docingest_syncaisearch_mainjob_run_n_workers": 1,
                     "docingest_pdfconversion_taskqueue_triggerind_routepth": "/ingestion/pdfconversion/task-queue/trigger-indicator",
                     "docingest_pdfconversion_taskqueue_jobrun_routepth": "/ingestion/pdfconversion/task-queue/bkg-tsk/job-run",
                     "docingest_pdfconversion_taskqueue_processlog_routepth": "/ingestion/pdfconversion/task-queue/bkg-tsk/process-log",
@@ -138,8 +138,8 @@
         "type": "ScheduleTrigger",
         "typeProperties": {
             "recurrence": {
-                "frequency": "Hour",
-                "interval": 4,
+                "frequency": "Minute",
+                "interval": 10,
                 "startTime": "2025-11-04T00:00:00",
                 "timeZone": "China Standard Time"
             }
