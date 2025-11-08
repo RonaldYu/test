@@ -145,14 +145,14 @@ runs:
           loganalytics_wksp_externalid=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.loganalytics_wksp_externalid')
           
           
-          delete_output=$(az monitor scheduled-query delete --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name --yes 2>&1 || true);
+          delete_output=$(az monitor scheduled-query delete --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name --yes 2>&1);
           check_output=$(az monitor scheduled-query show --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name 2>&1 || true);
           alert_name=$(echo $check_output | jq -r '.name' 2>/dev/null || echo "NotFound");
           if [ "$alert_name" = "$scheduledqueryrules_alert_rule_name" ]; then
-            exec_result="Success"
-          else
             exec_result="Failed"
-            exec_remark="The alert rule $scheduledqueryrules_alert_rule_name is not deleted in Azure Monitor with log analytics workspace $loganalytics_wksp_externalid, [delete info] $check_output  [check info] $check_output"
+            exec_remark="The alert rule $scheduledqueryrules_alert_rule_name is not deleted in Azure Monitor with log analytics workspace $loganalytics_wksp_externalid, [delete info] $delete_output  [check info] $check_output"
+          else
+            exec_result="Success"
           fi
 
           # Sanitize exec_remark for markdown table: replace newlines with spaces and escape pipe characters

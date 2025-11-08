@@ -89,6 +89,7 @@ runs:
             exec_result="Failed"
             exec_remark="The pipeline is not found in Azure Data Factory ${{ inputs.adf_name }}"
           fi
+          exec_remark_safe=$(echo "$exec_remark" | tr '\n' ' ' | sed 's/|/\\|/g' | sed 's/"/\\"/g' || echo "")
 
           echo "## Excution Result of create or update ADF Pipeline action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -96,7 +97,7 @@ runs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Pipeline Name | $pipeline_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark_safe |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$exec_result" = "Failed" ]; then
@@ -120,13 +121,15 @@ runs:
             exec_remark="The pipeline is not deleted in Azure Data Factory ${{ inputs.adf_name }}"
           fi
 
+          exec_remark_safe=$(echo "$exec_remark" | tr '\n' ' ' | sed 's/|/\\|/g' | sed 's/"/\\"/g' || echo "")
+
           echo "## Excution Result of delete ADF Pipeline action" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| ADF Pipeline Name | $pipeline_nm |" >> $GITHUB_STEP_SUMMARY
           echo "| Excution Result | $exec_result |" >> $GITHUB_STEP_SUMMARY
-          echo "| Remark | $exec_remark |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remark | $exec_remark_safe |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "$exec_result" = "Failed" ]; then
