@@ -49,7 +49,7 @@ jobs:
         
           ALERT_RULE_TYPE="${{ github.event.inputs.alert_rule_type }}"
           case "$ALERT_RULE_TYPE" in
-            job-run)
+            overallorch-fail-alert)
               alert_rule_pth="adf/alert/overallorch-fail-alert.json"
               ;;
             *) 
@@ -70,6 +70,9 @@ jobs:
               ;;
             delete)
               alert_rule_deploy_action="delete"
+              ;;
+            cancel_deployment)`
+              alert_rule_deploy_action="cancel_deployment"
               ;;
             *)
               echo "Invalid alert rule deploy action: $alert_rule_deploy_action"
