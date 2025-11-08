@@ -136,7 +136,7 @@ runs:
 
     - name: Delete an alert rule to Azure Monitor
       id: delete_alert_rule
-      if: steps.az_login.outputs.is_login == 'ok' && inputs.adf_pipeline_deploy_action == 'delete'
+      if: steps.az_login.outputs.is_login == 'ok' && inputs.alert_deploy_action == 'delete'
       uses: azure/cli@v2
       with:
         inlineScript: |
