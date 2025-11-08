@@ -140,8 +140,8 @@ runs:
           loganalytics_wksp_externalid=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.loganalytics_wksp_externalid')
           
           
-          delete_output=$(az monitor scheduled-query delete --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name --yes 2>&1);
-          check_output=$(az monitor scheduled-query show --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name 2>&1);
+          # delete_output=$(az monitor scheduled-query delete --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name --yes 2>&1);
+          # check_output=$(az monitor scheduled-query show --name $scheduledqueryrules_alert_rule_name --resource-group $resource_group_name 2>&1);
           # alert_name=$(echo $check_output | jq -r '.name' 2>/dev/null || echo "NotFound");
           # if [ "$alert_name" = "$scheduledqueryrules_alert_rule_name" ]; then
           #   exec_result="Success"
