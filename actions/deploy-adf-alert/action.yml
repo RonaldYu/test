@@ -57,7 +57,7 @@ runs:
       if: steps.az_login.outputs.is_login == 'ok' && (inputs.alert_deploy_action == 'create' || inputs.alert_deploy_action == 'update')
       uses: azure/cli@v2
       with:
-        inlineScript: |
+        run: |
           resource_group_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.resource_group_name')
           deployment_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.deployment_name')
           scheduledqueryrules_alert_rule_name=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.scheduledqueryrules_alert_rule_name')
