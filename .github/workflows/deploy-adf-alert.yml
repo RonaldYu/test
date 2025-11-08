@@ -71,7 +71,7 @@ jobs:
             delete)
               alert_rule_deploy_action="delete"
               ;;
-            cancel_deployment)`
+            cancel_deployment)
               alert_rule_deploy_action="cancel_deployment"
               ;;
             *)
