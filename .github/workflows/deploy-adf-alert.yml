@@ -50,7 +50,7 @@ jobs:
           ALERT_RULE_TYPE="${{ github.event.inputs.alert_rule_type }}"
           case "$ALERT_RULE_TYPE" in
             overallorch-fail-alert)
-              alert_rule_pth="adf/alert/overallorch-fail-alert.json"
+              alert_arm_template_pth="adf/alert/overallorch-fail-alert.json"
               ;;
             *) 
               echo "Invalid alert rule type: $ALERT_RULE_TYPE"
@@ -58,7 +58,7 @@ jobs:
               ;;
           esac
 
-          echo "alert_rule_pth=$alert_rule_pth" >> $GITHUB_OUTPUT
+          echo "alert_arm_template_pth=$alert_arm_template_pth" >> $GITHUB_OUTPUT
 
           DEPLOY_ACTION="${{ github.event.inputs.alert_rule_deploy_action }}"
           case "$DEPLOY_ACTION" in
