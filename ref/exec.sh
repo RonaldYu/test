@@ -78,7 +78,7 @@ if [ "$delete_output" = "" ]; then
 else
     echo "Failed"
 fi
-
+check_output=$(az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group test-rg 2>&1);
 az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group test-rg
 
 check_output=$(az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group test-rg 2>&1);
