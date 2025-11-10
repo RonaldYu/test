@@ -175,5 +175,122 @@ Azure Monitor 的警示規則會依照以下邏輯運作。這是一個非常典
 
 ---
 
+### 使用 split_by_dimensions 的影響
+
+#### 📌 當加入 Resource ID 和 Run ID 作為維度時
+
+如果你在 **Split by dimensions** 中加入了：
+- **Resource ID column**（資源識別碼欄位）
+- **Run ID**（執行識別碼欄位）
+
+警示規則的行為會發生以下重要變化：
+
+---
+
+#### 🔄 1. 資料分組邏輯的改變
+
+**原本（無 split_by_dimensions）：**
+- 所有符合條件的失敗 pipeline runs 會被**彙總在一起**計算
+- 查詢結果只有一個總計數值
+
+**加入維度後：**
+- 資料會按照 **Resource ID + Run ID** 的組合進行**分組**
+- 每個組合會被**獨立計算**和評估
+
+---
+
+#### 📊 2. 查詢結果結構的變化
+
+**原本的查詢結果範例：**
+
+| TimeGenerated bin | Failed count |
+|-------------------|--------------|
+| 09:35 – 09:40     | 0            |
+| 09:40 – 09:45     | 1            |
+| 09:50 – 09:55     | 2            |
+
+**加入維度後的查詢結果範例：**
+
+| TimeGenerated bin | Resource ID | Run ID | Failed count |
+|-------------------|-------------|--------|--------------|
+| 09:35 – 09:40     | /subscriptions/.../factories/adf-001 | run-001 | 0 |
+| 09:40 – 09:45     | /subscriptions/.../factories/adf-001 | run-001 | 1 |
+| 09:40 – 09:45     | /subscriptions/.../factories/adf-002 | run-002 | 1 |
+| 09:50 – 09:55     | /subscriptions/.../factories/adf-001 | run-001 | 2 |
+
+---
+
+#### ⚠️ 3. 警示觸發邏輯的改變
+
+**重要變化：**
+
+1. **獨立評估**：每個 **Resource ID + Run ID** 組合會被**單獨評估**
+   - 每個組合都有自己的計數和閾值檢查
+   - 每個組合都獨立判斷是否違規
+
+2. **多個警示實例**：
+   - 如果有多個不同的 Resource ID + Run ID 組合都出現失敗（> 0），**每個組合都會觸發一個獨立的警示**
+   - 例如：如果有 3 個不同的 pipeline run 失敗，可能會觸發 **3 個警示實例**
+
+3. **警示內容更精確**：
+   - 每個警示會包含具體的 **Resource ID** 和 **Run ID** 資訊
+   - 可以更精確地識別是哪個資源的哪個執行失敗
+
+---
+
+### 🎯 4. 實際運作範例
+
+假設在 09:30 – 10:00 期間有以下失敗記錄：
+
+| TimeGenerated | Resource ID | Run ID | Status |
+|---------------|-------------|--------|--------|
+| 09:42 | /subscriptions/.../factories/adf-001 | run-001 | Failed |
+| 09:43 | /subscriptions/.../factories/adf-001 | run-002 | Failed |
+| 09:52 | /subscriptions/.../factories/adf-002 | run-003 | Failed |
+
+**無 split_by_dimensions：**
+- 總計：3 筆失敗
+- 觸發：**1 個警示**（因為總數 > 0）
+
+**有 split_by_dimensions（Resource ID + Run ID）：**
+- 分組結果：
+  - `adf-001 + run-001`: 1 筆失敗 → 觸發警示 #1
+  - `adf-001 + run-002`: 1 筆失敗 → 觸發警示 #2
+  - `adf-002 + run-003`: 1 筆失敗 → 觸發警示 #3
+- 觸發：**3 個獨立的警示實例**
+
+---
+
+### ✅ 5. 使用維度的優缺點
+
+**優點：**
+- ✅ **精確定位**：可以清楚知道是哪個資源的哪個執行失敗
+- ✅ **獨立追蹤**：每個 pipeline run 的失敗情況被獨立監控
+- ✅ **詳細資訊**：警示通知中包含更詳細的上下文資訊
+
+**缺點：**
+- ⚠️ **可能產生大量警示**：如果有多個 pipeline runs 同時失敗，會產生多個警示實例
+- ⚠️ **通知頻繁**：可能導致通知過多，需要適當設定 Action Group 的抑制機制
+
+---
+
+### 💡 6. 建議配置
+
+如果使用 split_by_dimensions，建議：
+
+1. **設定 Alert Suppression（抑制時間）**：
+   - 例如：30 分鐘內不重複觸發同一維度組合的警示
+   - 避免同一 pipeline run 的多次失敗產生重複通知
+
+2. **考慮使用 Resource ID 單一維度**：
+   - 如果只需要知道哪個 ADF 資源失敗，可以只使用 Resource ID
+   - 這樣可以減少警示數量，同時仍能識別失敗的資源
+
+3. **評估通知頻率**：
+   - 根據你的業務需求，決定是否需要 Run ID 級別的細粒度監控
+   - 如果 pipeline runs 很頻繁，可能會產生大量警示
+
+---
+
 
 

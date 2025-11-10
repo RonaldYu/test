@@ -2,13 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        
     },
     "variables": {
-        "scheduledqueryrules_alert_rule_name": "aipil-alert-rule-test2",
+        "scheduledqueryrules_alert_rule_name": "hklife-nprd-dev-aipil-datapipe-overallorch-proc-info-alert1",
         "loganalytics_wksp_externalid": "/subscriptions/3050bf26-d2fe-471c-a7ab-d325a5530c90/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/test-loganalytics-wksp",
         "resource_group_name": "test-rg",
-        "deployment_name": "overallorch-fail-alert"
+        "deployment_name": "hklife-nprd-dev-aipil-datapipe-overallorch-proc-info-alert1"
     },
     "resources": [
         {
@@ -19,28 +18,28 @@
             "kind": "LogAlert",
             "properties": {
                 "displayName": "[variables('scheduledqueryrules_alert_rule_name')]",
-                "description": "testing alert rule ~~顆顆顆",
-                "severity": 1,
+                "description": "The alert rule for overall orchestration processed information",
+                "severity": 3,
                 "enabled": true,
-                "evaluationFrequency": "PT10M",
+                "evaluationFrequency": "PT6H",
                 "scopes": [
                     "[variables('loganalytics_wksp_externalid')]"
                 ],
                 "targetResourceTypes": [
                     "Microsoft.OperationalInsights/workspaces"
                 ],
-                "windowSize": "PT5M",
+                "windowSize": "PT6H",
                 "criteria": {
                     "allOf": [
                         {
-                            "query": "ADFPipelineRun\n| where Annotations has \"aipil\"\n    and Annotations has \"data-pipe\"\n    and Annotations has \"pipeline-orchestration\"\n    and Status == \"Failed\"\n\n",
+                            "query": "ADFPipelineRun\n| where Annotations has \"aipil\"\n    and Annotations has \"data-pipe\"   \n    and Annotations has \"pipeline-orchestration\"   \n    and Status in (\"Failed\", \"Succeeded\")\n",
                             "timeAggregation": "Count",
                             "dimensions": [],
                             "resourceIdColumn": "_ResourceId",
                             "operator": "GreaterThan",
                             "threshold": 0,
                             "failingPeriods": {
-                                "numberOfEvaluationPeriods": 2,
+                                "numberOfEvaluationPeriods": 4,
                                 "minFailingPeriodsToAlert": 1
                             }
                         }
@@ -49,11 +48,11 @@
                 "autoMitigate": false,
                 "actions": {
                     "actionGroups": [
-                        "/subscriptions/3050BF26-D2FE-471C-A7AB-D325A5530C90/resourceGroups/test-rg/providers/microsoft.insights/actionGroups/test-adf-group"
+                        "[variables('action_group_externalid')]"
                     ],
                     "customProperties": {},
                     "actionProperties": {
-                        "Email.Subject": "aipil orchestration fail ~2"
+                        "Email.Subject": "Dev AI PIL Data Pipe Overall Orchestration Processed Inform"
                     }
                 }
             }

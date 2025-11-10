@@ -11,8 +11,7 @@ on:
         options:
           - overallorch-fail-alert
           - pilsync-fail-alert
-          - metadata-extraction-fail-alert
-          - document-ingestion-fail-alert
+          - overallorch-proc-info-alert
       
       alert_rule_deploy_action:
         required: true
@@ -51,6 +50,12 @@ jobs:
           case "$ALERT_RULE_TYPE" in
             overallorch-fail-alert)
               alert_arm_template_pth="adf/alert/overallorch-fail-alert.json"
+              ;;
+            overallorch-proc-info-alert)
+              alert_arm_template_pth="adf/alert/overallorch-proc-info-alert.json"
+              ;;
+            pilsync-fail-alert)
+              alert_arm_template_pth="adf/alert/pilsync-fail-alert.json"
               ;;
             *) 
               echo "Invalid alert rule type: $ALERT_RULE_TYPE"
