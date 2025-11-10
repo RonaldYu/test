@@ -49,13 +49,13 @@ jobs:
           ALERT_RULE_TYPE="${{ github.event.inputs.alert_rule_type }}"
           case "$ALERT_RULE_TYPE" in
             overallorch-fail-alert)
-              alert_arm_template_pth="adf/alert/overallorch-fail-alert.json"
+              alert_arm_template_pth="adf/alert/datapipe-overallorch-fail-alert1.json"
               ;;
             overallorch-proc-info-alert)
-              alert_arm_template_pth="adf/alert/overallorch-proc-info-alert.json"
+              alert_arm_template_pth="adf/alert/datapipe-overallorch-proc-info-alert1.json"
               ;;
             pilsync-fail-alert)
-              alert_arm_template_pth="adf/alert/pilsync-fail-alert.json"
+              alert_arm_template_pth="adf/alert/datapipe-pilsync-fail-alert1.json"
               ;;
             *) 
               echo "Invalid alert rule type: $ALERT_RULE_TYPE"

@@ -22,14 +22,14 @@
                 "description": "The alert rule for PIL sync failure",
                 "severity": 1,
                 "enabled": true,
-                "evaluationFrequency": "PT4H",
+                "evaluationFrequency": "PT2H",
                 "scopes": [
                     "[variables('loganalytics_wksp_externalid')]"
                 ],
                 "targetResourceTypes": [
                     "Microsoft.OperationalInsights/workspaces"
                 ],
-                "windowSize": "PT1H",
+                "windowSize": "PT2H",
                 "criteria": {
                     "allOf": [
                         {
@@ -40,7 +40,7 @@
                             "operator": "GreaterThan",
                             "threshold": 0,
                             "failingPeriods": {
-                                "numberOfEvaluationPeriods": 4,
+                                "numberOfEvaluationPeriods": 2,
                                 "minFailingPeriodsToAlert": 1
                             }
                         }
