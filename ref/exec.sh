@@ -18,7 +18,7 @@ existing_pipeline=$(az datafactory pipeline show --factory-name sdafsadfadf --na
 az datafactory pipeline create --factory-name $adf_name --pipeline "$pipeline_pr" --name $pipeline_nm --resource-group $adf_resource_group
 az datafactory pipeline delete --factory-name $adf_name --name $pipeline_nm --resource-group $adf_resource_group --yes
 
-adf_trigger_pth="trigger2.json"
+adf_trigger_pth="datapipe-overallorch-proc-info-alert1.json"
 password_placeholder="PASSWORD"
 trigger_nm=$(cat $adf_trigger_pth | jq -r '.name')
 trigger_pr=$(cat $adf_trigger_pth | jq -c '.properties')

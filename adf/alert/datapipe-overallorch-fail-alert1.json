@@ -1,9 +1,7 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
-        
-    },
+    "parameters": {},
     "variables": {
         "scheduledqueryrules_alert_rule_name": "hklife-nprd-dev-aipil-datapipe-overallorch-fail-alert1",
         "loganalytics_wksp_externalid": "/subscriptions/3050bf26-d2fe-471c-a7ab-d325a5530c90/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/test-loganalytics-wksp",
