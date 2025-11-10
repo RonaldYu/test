@@ -48,7 +48,7 @@
                 "autoMitigate": false,
                 "actions": {
                     "actionGroups": [
-                        "[variables('action_group_externalid')]"
+                        "/subscriptions/3050BF26-D2FE-471C-A7AB-D325A5530C90/resourceGroups/test-rg/providers/microsoft.insights/actionGroups/test-adf-group"
                     ],
                     "customProperties": {},
                     "actionProperties": {

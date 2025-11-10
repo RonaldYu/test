@@ -93,3 +93,7 @@ loganalytics_wksp_externalid=$(cat $alert_arm_template_pth | jq -r '.variables.l
 
 
 deploy_output=$(az deployment group create --resource-group $resource_group_name --template-file $alert_arm_template_pth --name $deployment_name 2>&1 || true);
+
+provisioningState=$(echo $deploy_output | jq -r '.properties.provisioningState' 2>&1 || true);
+
+provisioningState=$(echo $deploy_output | jq -r '.properties.provisioningState');
