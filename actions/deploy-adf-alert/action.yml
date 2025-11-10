@@ -64,7 +64,7 @@ runs:
           loganalytics_wksp_externalid=$(cat ${{ inputs.alert_arm_template_pth }} | jq -r '.variables.loganalytics_wksp_externalid')
 
           deploy_output=$(az deployment group create --resource-group $resource_group_name --template-file ${{ inputs.alert_arm_template_pth }} --name $deployment_name 2>&1 || true);
-          provisioningState=$(echo $deploy_output | jq -r '.properties.provisioningState' 2>&1 || true);
+          provisioningState=$(echo $deploy_output | jq -r '.properties.provisioningState' 2>/dev/null || echo "NotFound");
 
           if [ "$provisioningState" = "Succeeded" ]; then
             exec_result="Success"

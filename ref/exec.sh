@@ -84,3 +84,12 @@ az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group t
 check_output=$(az monitor scheduled-query show --name aipil-alert-rule-test2 --resource-group test-rg 2>&1);
 alert_name=$(echo $check_output | jq -r '.name')
 echo "Alert name: $alert_name"
+
+alert_arm_template_pth="datapipe-overallorch-proc-info-alert1.json"
+resource_group_name=$(cat $alert_arm_template_pth | jq -r '.variables.resource_group_name')
+deployment_name=$(cat $alert_arm_template_pth | jq -r '.variables.deployment_name')
+scheduledqueryrules_alert_rule_name=$(cat $alert_arm_template_pth | jq -r '.variables.scheduledqueryrules_alert_rule_name')
+loganalytics_wksp_externalid=$(cat $alert_arm_template_pth | jq -r '.variables.loganalytics_wksp_externalid')
+
+
+deploy_output=$(az deployment group create --resource-group $resource_group_name --template-file $alert_arm_template_pth --name $deployment_name 2>&1 || true);
