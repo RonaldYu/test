@@ -82,8 +82,8 @@ class DataSchemaModel:
             "nullable": self.nullable,
             "contains_object": self.contains_object,
             "contains_array": self.contains_array,
-            # "parent_path": self.parent_path,
-            # "parent_data_type": self.parent_data_type
+            "parent_path": self.parent_path,
+            "parent_data_type": self.parent_data_type
         }
 
 

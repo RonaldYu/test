@@ -1,8 +1,10 @@
 from pymongo import MongoClient
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from typing import Dict
-from utils.col_schma_ext import CollectionSchemaModel
+from typing import Dict, List
+import copy
+from utils.col_schma_ext import CollectionSchemaModel, IndexDetailModel
+
 
 class DatabaseLevelSchemaInfoModel:
     def __init__(
@@ -11,6 +13,7 @@ class DatabaseLevelSchemaInfoModel:
         port: int,
         db_nm: str,
         n_views: int,
+        n_collections: int,
         n_documents: int,
         avg_document_data_size: float,
         document_data_size: int,
@@ -24,6 +27,7 @@ class DatabaseLevelSchemaInfoModel:
         self.port = port
         self.db_nm = db_nm
         self.n_views = n_views
+        self.n_collections = n_collections
         self.n_documents = n_documents
         self.avg_document_data_size = avg_document_data_size
         self.document_data_size = document_data_size
@@ -100,3 +104,63 @@ class DatabaseSchemaModel:
             'database_schema_info': self.database_schema_info,
             'collection_schema_details': self.collection_schema_details
         }
+
+
+    def database_schema_info_to_tabular_format(self):
+        return self.database_schema_info
+
+    def collection_schema_info_to_tabular_format(self):
+        
+        collection_schema_info_tabular_format = []
+
+        for col_nm, collection_detail in self.collection_schema_details.items():
+            tmp = {
+                k: v
+                for k, v in collection_detail.collection_schema_info.to_dict().items()
+                if k != 'index_details'
+            }
+            tmp['ttl_index_size'] = collection_detail.collection_schema_info.index_details.get('ttl_index_size', None)
+            collection_schema_info_tabular_format.append(tmp)
+    
+        return collection_schema_info_tabular_format
+    
+    def collection_index_details_to_tabular_format(self):
+        collection_index_details_tabular_format = []
+
+        for col_nm, collection_detail in self.collection_schema_details.items():
+
+            ttl_size = collection_detail.collection_schema_info.index_details.get('index_sizes', dict())
+            settings = collection_detail.collection_schema_info.index_details.get('settings', dict({}))
+            tmp_settings = copy.deepcopy(settings)
+            for index_name in tmp_settings.keys():
+                
+                try:
+                    tmp_settings[index_name]['index_size'] += ttl_size.get(index_name, 0)
+                except:
+                    tmp_settings[index_name]['index_size'] = ttl_size.get(index_name, 0)
+
+                
+                tmp_settings[index_name]['db_nm'] = collection_detail.collection_schema_info.db_nm
+                tmp_settings[index_name]['col_nm'] = collection_detail.collection_schema_info.col_nm
+                tmp_settings[index_name]['collection_ns'] = collection_detail.collection_schema_info.collection_ns
+                tmp_settings[index_name]['index_name'] = index_name
+                tmp_settings[index_name]['fetch_datetime'] = collection_detail.collection_schema_info.fetch_datetime
+
+            collection_index_details_tabular_format.append(tmp_settings)
+
+        return collection_index_details_tabular_format
+
+
+    def doc_schema_details_to_tabular_format(self):
+        doc_schema_details_tabular_format = []
+
+        for col_nm, collection_detail in self.collection_schema_details.items():
+
+            for data_nm, data_schema in collection_detail.doc_schema_details.items():
+                doc_schema_details_tabular_format.append({
+                    'db_nm': collection_detail.collection_schema_info.db_nm,
+                    'col_nm': collection_detail.collection_schema_info.col_nm,
+                    'collection_ns': collection_detail.collection_schema_info.collection_ns,
+                    'fetch_datetime': collection_detail.collection_schema_info.fetch_datetime,
+                    **data_schema.to_dict()
+                })

@@ -1,4 +1,4 @@
-from _typeshed import IdentityFunction
+
 import json
 from datetime import datetime, date
 from typing import Any
