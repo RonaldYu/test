@@ -110,7 +110,7 @@ class DBAnalysisReportingUtils:
 
     @staticmethod
     def dbanalysis_report_to_json(obj: DatabaseSchemaModel, file_path: str):
-        _write_dict_to_json_file(obj, file_path)
+        _write_dict_to_json_file(_dict_to_json_serializable(obj), file_path)
     
     @staticmethod
     def dbanalysis_report_to_excel(objs: DatabaseSchemaModel | List[DatabaseSchemaModel], file_path: str):
@@ -188,7 +188,7 @@ class DBAnalysisReportingUtils:
                 tmp_settings[index_name]['index_name'] = index_name
                 tmp_settings[index_name]['fetch_datetime'] = collection_detail.collection_schema_info.fetch_datetime
 
-            collection_index_details_tabular_format.append(tmp_settings)
+                collection_index_details_tabular_format.append(tmp_settings[index_name])
 
         return _dict_to_json_serializable(collection_index_details_tabular_format)
 
