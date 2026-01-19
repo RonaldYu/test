@@ -2,7 +2,50 @@ from pymongo import MongoClient
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Dict
-from col_schma_ext import CollectionSchemaModel
+from utils.col_schma_ext import CollectionSchemaModel
+
+class DatabaseLevelSchemaInfoModel:
+    def __init__(
+        self,
+        host: str, 
+        port: int,
+        db_nm: str,
+        n_views: int,
+        n_documents: int,
+        avg_document_data_size: float,
+        document_data_size: int,
+        document_storage_size: int,
+        ttl_n_indexes: int,
+        ttl_index_size: int,
+        fetch_datetime: datetime,
+    ):
+
+        self.host = host
+        self.port = port
+        self.db_nm = db_nm
+        self.n_views = n_views
+        self.n_documents = n_documents
+        self.avg_document_data_size = avg_document_data_size
+        self.document_data_size = document_data_size
+        self.document_storage_size = document_storage_size
+        self.ttl_n_indexes = ttl_n_indexes
+        self.ttl_index_size = ttl_index_size
+        self.fetch_datetime = fetch_datetime
+
+    def to_dict(self):
+        return {
+            'host': self.host,
+            'port': self.port,
+            'db_nm': self.db_nm,
+            'n_views': self.n_views,
+            'n_documents': self.n_documents,
+            'avg_document_data_size': self.avg_document_data_size,
+            'document_data_size': self.document_data_size,
+            'document_storage_size': self.document_storage_size,
+            'ttl_n_indexes': self.ttl_n_indexes,
+            'ttl_index_size': self.ttl_index_size,
+            'fetch_datetime': self.fetch_datetime
+        }
 
 class DatabaseSchemaModel:
 
@@ -20,19 +63,22 @@ class DatabaseSchemaModel:
 
         db_stats = mongo_client[self.db_nm].command("dbstats")
 
-        self.host, self.port = mongo_client.address
+        self.database_schema_info = DatabaseLevelSchemaInfoModel(
+            host = mongo_client.address[0],
+            port = mongo_client.address[1],
+            db_nm = self.db_nm,
+            n_collections = db_stats.get('collections', None),
+            n_views = db_stats.get('views', None),
+            n_documents = db_stats.get('objects', None),
+            avg_document_data_size = db_stats.get('avgObjSize', None),
+            document_data_size = db_stats.get('dataSize', None),
+            document_storage_size = db_stats.get('storageSize', None),
+            ttl_n_indexes = db_stats.get('indexes', None),
+            ttl_index_size = db_stats.get('indexSize', None),
+            fetch_datetime = datetime.now(ZoneInfo("Asia/Hong_Kong"))
+        )
         
-        self.n_collections = db_stats.get('collections', None)
-        self.n_views = db_stats.get('views', None)
-        self.n_documents = db_stats.get('objects', None)
-        self.avg_document_data_size = db_stats.get('avgObjSize', None)
-        self.document_data_size = db_stats.get('dataSize', None)
-        self.document_storage_size = db_stats.get('storageSize', None)
-        self.fetch_datetime = datetime.now(ZoneInfo("Asia/Hong_Kong"))
-        self.index_details = {
-            'n_indexes': db_stats.get('indexes', None),
-            'ttl_index_size': db_stats.get('indexSize', None)
-        }
+        
 
     def get_collection_schema(self, col_nm: str, mongo_client: MongoClient, n_doc_to_derive: int = None, fetch_doc_batch_size: int = 1000):
 
@@ -51,16 +97,6 @@ class DatabaseSchemaModel:
 
     def to_dict(self):
         return {
-            'db_nm': self.db_nm,
-            'host': self.host,
-            'port': self.port,
-            'n_collections': self.n_collections,
-            'n_views': self.n_views,
-            'n_documents': self.n_documents,
-            'avg_document_data_size': self.avg_document_data_size,
-            'document_data_size': self.document_data_size,
-            'document_storage_size': self.document_storage_size,
-            'index_details': self.index_details,
-            'fetch_datetime': self.fetch_datetime,
+            'database_schema_info': self.database_schema_info,
             'collection_schema_details': self.collection_schema_details
         }

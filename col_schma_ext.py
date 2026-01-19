@@ -3,11 +3,48 @@
 from pymongo import MongoClient
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from typing import List, Dict
+from typing import List, Dict, Any
 from pymongo.cursor import Cursor
 from collections import defaultdict
-from doc_schema_ext import DataSchemaUtils, DataSchemaModel
+from utils.doc_schema_ext import DataSchemaUtils, DataSchemaModel
+
 # %%
+
+class CollectionLevelSchemaInfoModel:
+    def __init__(
+        self,
+        db_nm: str,
+        col_nm: str,
+        collection_ns: str,
+        document_data_size: int,
+        n_documents: int,
+        avg_document_data_size: float,
+        document_storage_size: int,
+        index_details: Dict[str, Any],
+        fetch_datetime: datetime
+    ):
+        self.db_nm = db_nm
+        self.col_nm = col_nm
+        self.collection_ns = collection_ns
+        self.document_data_size = document_data_size
+        self.n_documents = n_documents
+        self.avg_document_data_size = avg_document_data_size
+        self.document_storage_size = document_storage_size
+        self.index_details = index_details
+        self.fetch_datetime = fetch_datetime
+
+    def to_dict(self):
+        return {
+            'db_nm': self.db_nm,
+            'col_nm': self.col_nm,
+            'collection_ns': self.collection_ns,
+            'document_data_size': self.document_data_size,
+            'n_documents': self.n_documents,
+            'avg_document_data_size': self.avg_document_data_size,
+            'document_storage_size': self.document_storage_size,
+            'index_details': self.index_details,
+            'fetch_datetime': self.fetch_datetime
+        }
 
 class CollectionSchemaModel:
 
@@ -28,22 +65,27 @@ class CollectionSchemaModel:
 
         col_stats = mongo_client[self.db_nm].command("collstats", self.col_nm)
 
-        self.collection_ns = col_stats["ns"]
-        self.document_data_size = col_stats["size"]
-        self.n_documents = col_stats["count"]
-        self.avg_document_data_size = col_stats["avgObjSize"]
-        self.document_storage_size = col_stats["storageSize"]
-        self.fetch_datetime = datetime.now(ZoneInfo("Asia/Hong_Kong"))
-        self.index_details = {
-            'ttl_index_size': col_stats.get("totalIndexSize", None),
-            'index_sizes': col_stats.get("indexSizes", None),
-            'settings': mongo_client[self.db_nm][self.col_nm].index_information()
-        }
+        self.collection_schema_info = CollectionLevelSchemaInfoModel(
+            db_nm = self.db_nm,
+            col_nm = self.col_nm,
+            collection_ns = col_stats["ns"],
+            document_data_size = col_stats["size"],
+            n_documents = col_stats["count"],
+            avg_document_data_size = col_stats.get("avgObjSize", None),
+            document_storage_size = col_stats["storageSize"],
+            index_details = {
+                'ttl_index_size': col_stats.get("totalIndexSize", None),
+                'index_sizes': col_stats.get("indexSizes", None),
+                'settings': mongo_client[self.db_nm][self.col_nm].index_information()
+            },
+            fetch_datetime = datetime.now(ZoneInfo("Asia/Hong_Kong"))
+        )
+
 
         if self.n_doc_to_derive is not None:
-            self.n_doc_to_derive = min(self.n_doc_to_derive, self.n_documents)
+            self.n_doc_to_derive = min(self.n_doc_to_derive, self.collection_schema_info.n_documents)
         else:
-            self.n_doc_to_derive = self.n_documents
+            self.n_doc_to_derive = self.collection_schema_info.n_documents
 
         collect_client = mongo_client[self.db_nm][self.col_nm]
         cursor = collect_client.find({}).limit(self.n_doc_to_derive)
@@ -78,15 +120,6 @@ class CollectionSchemaModel:
 
     def to_dict(self):
         return {
-            'collection_ns': self.collection_ns,
-            'database_nm': self.db_nm,
-            'collection_nm': self.col_nm,
-            'collection_size': self.collection_size,
-            'document_count': self.document_count,
-            'avg_document_size': self.avg_document_size,
-            'storage_size': self.storage_size,
-            'index_details': self.index_details,
-            'fetch_datetime': self.fetch_datetime,
-            'n_doc_to_derive': self.n_doc_to_derive,
+            'collection_schema_info': self.collection_schema_info,
             'doc_schema_details': self.doc_schema_details
         }

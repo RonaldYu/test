@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from collections import defaultdict
 import copy
 
-from general_opr import _dict_to_json_serializable
+from utils.general_opr import _dict_to_json_serializable
 
 class DataSchemaNode:
 
@@ -12,7 +12,7 @@ class DataSchemaNode:
     null_data_type = "null"
     mapping_data_type = "object"
 
-    root_data_nm = "root"
+    root_data_nm = ""
     array_item_data_nm = "[]"
 
     def __init__(self, data_nm, data_type, parent_data_nm=None, parent_data_type=None):
@@ -228,9 +228,8 @@ class DataSchemaUtils:
             ls_flat_schema, agg_derived_schema
         )
 
-
-        
-        
+    
+    
         ls_data_nms = list(derived_schema_results.keys())
         for data_nm in ls_data_nms:
 
@@ -253,52 +252,12 @@ class DataSchemaUtils:
             # add contains array
             if DataSchemaNode.mapping_data_type in data_schema.data_type:
                 data_schema.contains_object = True
+
+        # remove root data schema if exists
+        if DataSchemaNode.root_data_nm in derived_schema_results:
+            del derived_schema_results[DataSchemaNode.root_data_nm]
             
 
 
         return derived_schema_results
     
-
-# %%
-# Simple Test 1
-docs = [{"x21": 1}, {"x22": 33}, {"x22": 33, "x44": 123}, 33]
-
-derived_schema_results = DataSchemaUtils.derive_schema(docs)
-{
-    k: v.to_dict()
-    for k, v in derived_schema_results.items()
-}
-#%%
-derived_schema_results = DataSchemaUtils.derive_schema([])
-{
-    k: v.to_dict()
-    for k, v in derived_schema_results.items()
-}
-#%%
-# Simple Test 2
-from datetime import datetime
-docs = [
-    {
-        # "x3": [],
-        # "x2": [{"x21": 1}, {"x22": 33}, {"x22": 33, "x44": 123}, 33],
-        "x1": [1, "a", None],
-        # 'x4': None
-    },
-    {
-        # "x3": [],
-        "x2": [{"x21": 1}, {"x22": 33}, {"x22": 33, "x44": 123}, 33, None],
-        "x1": [1, "a", None, datetime.now()],
-        # 'x4': 1
-    },
-    {'x1': None}
-]
-
-derived_schema_results = DataSchemaUtils.derive_schema(docs)
-{
-    k: v.to_dict()
-    for k, v in derived_schema_results.items()
-}
-# %%
-_dict_to_json_serializable(
-    obj = derived_schema_results
-)

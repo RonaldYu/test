@@ -1,8 +1,9 @@
+from _typeshed import IdentityFunction
 import json
 from datetime import datetime, date
 from typing import Any
 from decimal import Decimal
-
+import json
 
 def _default_json_handler(obj: Any) -> Any:
     
@@ -50,3 +51,7 @@ def _dict_to_json_serializable(obj: Any, handler = _default_json_handler) -> Any
         if converted != obj:
             return _dict_to_json_serializable(converted, handler)
         return converted
+
+def _write_dict_to_json_file(obj: Any, file_path: str):
+    with open(file_path, 'w') as f:
+        json.dump(obj, f, indent = 4)
