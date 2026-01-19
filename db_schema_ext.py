@@ -3,8 +3,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Dict, List
 import copy
-from utils.col_schma_ext import CollectionSchemaModel, IndexDetailModel
-
+from utils.col_schma_ext import CollectionSchemaModel
+from utils.general_opr import _dict_to_json_serializable
 
 class DatabaseLevelSchemaInfoModel:
     def __init__(
@@ -105,15 +105,18 @@ class DatabaseSchemaModel:
             'collection_schema_details': self.collection_schema_details
         }
 
+class DBSchemaAnalysisUtils:
 
-    def database_schema_info_to_tabular_format(self):
-        return self.database_schema_info
+    @staticmethod
+    def database_schema_info_to_tabular_format(obj: DatabaseSchemaModel):
+        return _dict_to_json_serializable(obj.database_schema_info)
 
-    def collection_schema_info_to_tabular_format(self):
+    @staticmethod
+    def collection_schema_info_to_tabular_format(obj: DatabaseSchemaModel):
         
         collection_schema_info_tabular_format = []
 
-        for col_nm, collection_detail in self.collection_schema_details.items():
+        for col_nm, collection_detail in obj.collection_schema_details.items():
             tmp = {
                 k: v
                 for k, v in collection_detail.collection_schema_info.to_dict().items()
@@ -122,12 +125,13 @@ class DatabaseSchemaModel:
             tmp['ttl_index_size'] = collection_detail.collection_schema_info.index_details.get('ttl_index_size', None)
             collection_schema_info_tabular_format.append(tmp)
     
-        return collection_schema_info_tabular_format
+        return _dict_to_json_serializable(collection_schema_info_tabular_format)
     
-    def collection_index_details_to_tabular_format(self):
+    @staticmethod
+    def collection_index_details_to_tabular_format(obj: DatabaseSchemaModel):
         collection_index_details_tabular_format = []
 
-        for col_nm, collection_detail in self.collection_schema_details.items():
+        for col_nm, collection_detail in obj.collection_schema_details.items():
 
             ttl_size = collection_detail.collection_schema_info.index_details.get('index_sizes', dict())
             settings = collection_detail.collection_schema_info.index_details.get('settings', dict({}))
@@ -148,13 +152,13 @@ class DatabaseSchemaModel:
 
             collection_index_details_tabular_format.append(tmp_settings)
 
-        return collection_index_details_tabular_format
+        return _dict_to_json_serializable(collection_index_details_tabular_format)
 
-
-    def doc_schema_details_to_tabular_format(self):
+    @staticmethod
+    def doc_schema_details_to_tabular_format(obj: DatabaseSchemaModel):
         doc_schema_details_tabular_format = []
 
-        for col_nm, collection_detail in self.collection_schema_details.items():
+        for col_nm, collection_detail in obj.collection_schema_details.items():
 
             for data_nm, data_schema in collection_detail.doc_schema_details.items():
                 doc_schema_details_tabular_format.append({
@@ -164,3 +168,4 @@ class DatabaseSchemaModel:
                     'fetch_datetime': collection_detail.collection_schema_info.fetch_datetime,
                     **data_schema.to_dict()
                 })
+        return _dict_to_json_serializable(doc_schema_details_tabular_format)

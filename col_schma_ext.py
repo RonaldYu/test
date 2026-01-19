@@ -98,7 +98,7 @@ class CollectionSchemaModel:
             
             derived_doc_schema_results = DataSchemaUtils.derive_schema(docs, agg_derived_schema=derived_doc_schema_results)
             
-        self.doc_schema_details: defaultdict[str, DataSchemaModel] = derived_doc_schema_results
+        self.doc_schema_details: defaultdict[str, DataSchemaModel] = derived_doc_schema_results if derived_doc_schema_results is not None else defaultdict[str, DataSchemaModel](DataSchemaModel)
 
     @staticmethod
     def fetch_many_by_cursor(cursor: Cursor, batch_size: int) -> List[Dict]:
