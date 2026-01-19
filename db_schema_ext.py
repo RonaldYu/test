@@ -132,8 +132,18 @@ class DBAnalysisReportingUtils:
 
         df_database_schema_info = pd.DataFrame(database_schema_info_tabular_format)
         df_collection_schema_info = pd.DataFrame(collection_schema_info_tabular_format)
-        df_collection_index_details = pd.DataFrame(collection_index_details_tabular_format)
-        df_doc_schema_details = pd.DataFrame(doc_schema_details_tabular_format)
+        df_collection_index_details = pd.DataFrame(collection_index_details_tabular_format).loc[
+            :, 
+            ['db_nm', 'col_nm', 'collection_ns', 'index_name', 'index_size', 'v', 'key', 'fetch_datetime']
+        ]
+        df_doc_schema_details = pd.DataFrame(doc_schema_details_tabular_format) \
+            .drop(
+                columns = ['parent_path', 'parent_data_type']
+            )\
+            .sort_values(
+                by = ['db_nm', 'col_nm', 'path'],
+                ascending = [True, True, True]
+            )
 
         with pd.ExcelWriter(file_path) as writer:
             df_database_schema_info.to_excel(writer, sheet_name='database_schema_info', index=False)
