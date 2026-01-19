@@ -3,8 +3,9 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Dict, List
 import copy
+import pandas as pd
 from utils.col_schma_ext import CollectionSchemaModel
-from utils.general_opr import _dict_to_json_serializable
+from utils.general_opr import _dict_to_json_serializable, _write_dict_to_json_file
 
 class DatabaseLevelSchemaInfoModel:
     def __init__(
@@ -105,7 +106,44 @@ class DatabaseSchemaModel:
             'collection_schema_details': self.collection_schema_details
         }
 
-class DBSchemaAnalysisUtils:
+class DBAnalysisReportingUtils:
+
+    @staticmethod
+    def dbanalysis_report_to_json(obj: DatabaseSchemaModel, file_path: str):
+        _write_dict_to_json_file(obj, file_path)
+    
+    @staticmethod
+    def dbanalysis_report_to_excel(objs: DatabaseSchemaModel | List[DatabaseSchemaModel], file_path: str):
+
+        if isinstance(objs, DatabaseSchemaModel):
+            objs = [objs]
+
+        database_schema_info_tabular_format = []
+        collection_schema_info_tabular_format = []
+        collection_index_details_tabular_format = []
+        doc_schema_details_tabular_format = []
+
+        for obj in objs:
+            database_schema_info_tabular_format.append(DBAnalysisReportingUtils.database_schema_info_to_tabular_format(obj))
+            collection_schema_info_tabular_format.extend(DBAnalysisReportingUtils.collection_schema_info_to_tabular_format(obj))
+            collection_index_details_tabular_format.extend(DBAnalysisReportingUtils.collection_index_details_to_tabular_format(obj))
+            doc_schema_details_tabular_format.extend(DBAnalysisReportingUtils.doc_schema_details_to_tabular_format(obj))
+
+
+        df_database_schema_info = pd.DataFrame(database_schema_info_tabular_format)
+        df_collection_schema_info = pd.DataFrame(collection_schema_info_tabular_format)
+        df_collection_index_details = pd.DataFrame(collection_index_details_tabular_format)
+        df_doc_schema_details = pd.DataFrame(doc_schema_details_tabular_format)
+
+        with pd.ExcelWriter(file_path) as writer:
+            df_database_schema_info.to_excel(writer, sheet_name='database_schema_info', index=False)
+            df_collection_schema_info.to_excel(writer, sheet_name='collection_schema_info', index=False)
+            df_collection_index_details.to_excel(writer, sheet_name='collection_index_details', index=False)
+            df_doc_schema_details.to_excel(writer, sheet_name='doc_schema_details', index=False)
+
+
+
+
 
     @staticmethod
     def database_schema_info_to_tabular_format(obj: DatabaseSchemaModel):
