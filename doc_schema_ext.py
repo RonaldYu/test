@@ -269,8 +269,12 @@ derived_schema_results = DataSchemaUtils.derive_schema(docs)
     for k, v in derived_schema_results.items()
 }
 #%%
-
-
+derived_schema_results = DataSchemaUtils.derive_schema([])
+{
+    k: v.to_dict()
+    for k, v in derived_schema_results.items()
+}
+#%%
 # Simple Test 2
 from datetime import datetime
 docs = [

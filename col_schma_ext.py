@@ -11,12 +11,18 @@ from doc_schema_ext import DataSchemaUtils, DataSchemaModel
 
 class CollectionSchemaModel:
 
-    def __init__(self, db_nm: str, col_nm: str, mongo_client: MongoClient):
+    def __init__(
+        self, db_nm: str, col_nm: str, mongo_client: MongoClient, 
+        n_doc_to_derive: int = None,
+        fetch_doc_batch_size: int = 1000
+    ):
 
         self.db_nm = db_nm
         self.col_nm = col_nm
+        self.n_doc_to_derive = n_doc_to_derive
+        self.fetch_doc_batch_size = fetch_doc_batch_size
 
-        self.get_schema(mongo_client)
+        self.get_schema(mongo_client, batch_size=fetch_doc_batch_size)
     
     def get_schema(self, mongo_client: MongoClient, batch_size: int = 1000):
 
@@ -34,9 +40,13 @@ class CollectionSchemaModel:
             'settings': mongo_client[self.db_nm][self.col_nm].index_information()
         }
 
+        if self.n_doc_to_derive is not None:
+            self.n_doc_to_derive = min(self.n_doc_to_derive, self.n_documents)
+        else:
+            self.n_doc_to_derive = self.n_documents
 
         collect_client = mongo_client[self.db_nm][self.col_nm]
-        cursor = collect_client.find({})
+        cursor = collect_client.find({}).limit(self.n_doc_to_derive)
         derived_doc_schema_results = None
         while True:
             docs = CollectionSchemaModel.fetch_many_by_cursor(cursor, batch_size=batch_size)
@@ -76,5 +86,7 @@ class CollectionSchemaModel:
             'avg_document_size': self.avg_document_size,
             'storage_size': self.storage_size,
             'index_details': self.index_details,
+            'fetch_datetime': self.fetch_datetime,
+            'n_doc_to_derive': self.n_doc_to_derive,
             'doc_schema_details': self.doc_schema_details
         }
